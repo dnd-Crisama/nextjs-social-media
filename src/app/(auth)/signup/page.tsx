@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import SignUpForm from "./SignUpForm";
-import AnimeSignupStyles from "@/components/AnimeSignupStyles";
+import AnimeSignupStyles from "@/components/SignupStyles";
 
 export const metadata: Metadata = {
   title: "Sign Up",

@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import LoginForm from "./LoginForm";
-import AnimeLoginStyles from "@/components/AnimeLoginStyles";
+import AnimeLoginStyles from "@/components/LoginStyles";
 
 export const metadata: Metadata = {
   title: "Login",

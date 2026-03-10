@@ -28,3 +28,7 @@ export const loginSchema = z.object({
 
 // Tự động tạo type từ schema đăng nhập
 export type LoginValues = z.infer<typeof loginSchema>;
+
+export const createPostSchema = z.object({
+  content: requiredString,
+});

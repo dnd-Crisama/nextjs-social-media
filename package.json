@@ -26,7 +26,7 @@
     "@tiptap/pm": "^3.19.0",
     "@tiptap/react": "^3.19.0",
     "@tiptap/starter-kit": "^3.19.0",
-    "@uploadthing/react": "^7.3.3",
+    "@uploadthing/react": "7.3.3",
     "arctic": "^3.7.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -48,7 +48,7 @@
     "stream-chat-react": "^13.14.0",
     "tailwind-merge": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
-    "uploadthing": "^7.7.4",
+    "uploadthing": "7.7.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {

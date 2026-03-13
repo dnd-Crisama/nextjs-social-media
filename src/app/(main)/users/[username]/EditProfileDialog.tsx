@@ -25,7 +25,7 @@ import {
   UpdateUserProfileValues,
 } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera } from "lucide-react";
+import { Camera, ImageIcon, X } from "lucide-react";
 import Image, { StaticImageData } from "next/image";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -54,20 +54,27 @@ export default function EditProfileDialog({
   const mutation = useUpdateProfileMutation();
 
   const [croppedAvatar, setCroppedAvatar] = useState<Blob | null>(null);
+  const [croppedCover, setCroppedCover] = useState<Blob | null>(null);
 
   async function onSubmit(values: UpdateUserProfileValues) {
     const newAvatarFile = croppedAvatar
       ? new File([croppedAvatar], `avatar_${user.id}.webp`)
       : undefined;
 
+    const newCoverFile = croppedCover
+      ? new File([croppedCover], `cover_${user.id}.webp`)
+      : undefined;
+
     mutation.mutate(
       {
         values,
         avatar: newAvatarFile,
+        cover: newCoverFile,
       },
       {
         onSuccess: () => {
           setCroppedAvatar(null);
+          setCroppedCover(null);
           onOpenChange(false);
         },
       },
@@ -76,12 +83,26 @@ export default function EditProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-2">
+          <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
-        <div className="space-y-1.5">
-          <Label>Avatar</Label>
+
+        {/* Cover image preview in dialog */}
+        <div className="px-5">
+          <Label className="mb-1.5 block text-sm">Cover Image</Label>
+          <CoverInput
+            src={
+              croppedCover
+                ? URL.createObjectURL(croppedCover)
+                : user.coverImageUrl || null
+            }
+            onImageCropped={setCroppedCover}
+          />
+        </div>
+
+        <div className="px-5">
+          <Label className="mb-1.5 block text-sm">Avatar</Label>
           <AvatarInput
             src={
               croppedAvatar
@@ -91,16 +112,17 @@ export default function EditProfileDialog({
             onImageCropped={setCroppedAvatar}
           />
         </div>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 px-5 pb-5">
             <FormField
               control={form.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Display name</FormLabel>
+                  <FormLabel>Display Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your display name" {...field} />
+                    <Input placeholder="Your name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,8 +136,9 @@ export default function EditProfileDialog({
                   <FormLabel>Bio</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Tell us a little bit about yourself"
+                      placeholder="Tell us about yourself..."
                       className="resize-none"
+                      rows={3}
                       {...field}
                     />
                   </FormControl>
@@ -125,7 +148,7 @@ export default function EditProfileDialog({
             />
             <DialogFooter>
               <LoadingButton type="submit" loading={mutation.isPending}>
-                Save
+                Save changes
               </LoadingButton>
             </DialogFooter>
           </form>
@@ -135,6 +158,89 @@ export default function EditProfileDialog({
   );
 }
 
+// ─── Cover Input ──────────────────────────────────────────────────────────────
+
+interface CoverInputProps {
+  src: string | null;
+  onImageCropped: (blob: Blob | null) => void;
+}
+
+function CoverInput({ src, onImageCropped }: CoverInputProps) {
+  const [imageToCrop, setImageToCrop] = useState<File>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function onImageSelected(image: File | undefined) {
+    if (!image) return;
+    Resizer.imageFileResizer(
+      image,
+      1500,
+      500,
+      "WEBP",
+      90,
+      0,
+      (uri) => setImageToCrop(uri as File),
+      "file",
+    );
+  }
+
+  return (
+    <>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => onImageSelected(e.target.files?.[0])}
+        ref={fileInputRef}
+        className="sr-only hidden"
+      />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="group relative block w-full h-28 rounded-xl overflow-hidden bg-secondary hover:opacity-90 transition-opacity"
+      >
+        {src ? (
+          <img
+            src={src}
+            alt="Cover preview"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center w-full h-full gap-1.5 text-muted-foreground">
+            <ImageIcon className="size-6" />
+            <span className="text-xs">Choose cover image</span>
+          </div>
+        )}
+        <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity text-white">
+          <Camera size={22} />
+        </span>
+      </button>
+      {src && (
+        <button
+          type="button"
+          onClick={() => onImageCropped(null)}
+          className="mt-1 text-xs text-muted-foreground hover:text-destructive flex items-center gap-1"
+        >
+          <X size={12} /> Remove cover image
+        </button>
+      )}
+      {imageToCrop && (
+        <CropImageDialog
+          src={URL.createObjectURL(imageToCrop)}
+          cropAspectRatio={3 / 1}
+          onCropped={onImageCropped}
+          onClose={() => {
+            setImageToCrop(undefined);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = "";
+            }
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── Avatar Input ─────────────────────────────────────────────────────────────
+
 interface AvatarInputProps {
   src: string | StaticImageData;
   onImageCropped: (blob: Blob | null) => void;
@@ -142,12 +248,10 @@ interface AvatarInputProps {
 
 function AvatarInput({ src, onImageCropped }: AvatarInputProps) {
   const [imageToCrop, setImageToCrop] = useState<File>();
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function onImageSelected(image: File | undefined) {
     if (!image) return;
-
     Resizer.imageFileResizer(
       image,
       1024,
@@ -172,17 +276,17 @@ function AvatarInput({ src, onImageCropped }: AvatarInputProps) {
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="group relative block"
+        className="group relative block mb-2"
       >
         <Image
           src={src}
           alt="Avatar preview"
-          width={150}
-          height={150}
-          className="size-32 flex-none rounded-full object-cover"
+          width={80}
+          height={80}
+          className="size-20 flex-none rounded-full object-cover"
         />
-        <span className="absolute inset-0 m-auto flex size-12 items-center justify-center rounded-full bg-black bg-opacity-30 text-white transition-colors duration-200 group-hover:bg-opacity-25">
-          <Camera size={24} />
+        <span className="absolute inset-0 m-auto flex size-10 items-center justify-center rounded-full bg-black bg-opacity-30 text-white transition-colors duration-200 group-hover:bg-opacity-25">
+          <Camera size={18} />
         </span>
       </button>
       {imageToCrop && (

@@ -13,7 +13,11 @@ export const fileRouter = {
     .middleware(async () => {
       const { user } = await validateRequest();
       if (!user) throw new UploadThingError("Unauthorized");
-      return { user };
+      const fullUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { id: true, avatarUrl: true, coverImageUrl: true },
+      });
+      return { user: fullUser! };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       const oldAvatarUrl = metadata.user.avatarUrl;
@@ -41,6 +45,38 @@ export const fileRouter = {
       ]);
 
       return { avatarUrl: file.url };
+    }),
+
+  coverImage: f({
+    image: { maxFileSize: "8MB" },
+  })
+    .middleware(async () => {
+      const { user } = await validateRequest();
+      if (!user) throw new UploadThingError("Unauthorized");
+      const fullUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { id: true, avatarUrl: true, coverImageUrl: true },
+      });
+      return { user: fullUser! };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      const oldCoverUrl = metadata.user.coverImageUrl;
+
+      if (oldCoverUrl) {
+        const key = oldCoverUrl.substring(oldCoverUrl.lastIndexOf('/') + 1);
+        if (key) {
+          await new UTApi().deleteFiles(key);
+        }
+      }
+
+      await prisma.user.update({
+        where: { id: metadata.user.id },
+        data: {
+          coverImageUrl: file.url,
+        },
+      });
+
+      return { coverImageUrl: file.url };
     }),
 
     attachment: f({

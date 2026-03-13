@@ -19,22 +19,27 @@ export function useUpdateProfileMutation() {
   const queryClient = useQueryClient();
 
   const { startUpload: startAvatarUpload } = useUploadThing("avatar");
+  const { startUpload: startCoverUpload } = useUploadThing("coverImage");
 
   const mutation = useMutation({
     mutationFn: async ({
       values,
       avatar,
+      cover,
     }: {
       values: UpdateUserProfileValues;
       avatar?: File;
+      cover?: File;
     }) => {
       return Promise.all([
         updateUserProfile(values),
         avatar && startAvatarUpload([avatar]),
+        cover && startCoverUpload([cover]),
       ]);
     },
-    onSuccess: async ([updatedUser, uploadResult]) => {
-      const newAvatarUrl = uploadResult?.[0]?.serverData?.avatarUrl;
+    onSuccess: async ([updatedUser, avatarUploadResult, coverUploadResult]) => {
+      const newAvatarUrl = avatarUploadResult?.[0]?.serverData?.avatarUrl;
+      const newCoverUrl = coverUploadResult?.[0]?.serverData?.coverImageUrl;
 
       const queryFilter: QueryFilters = {
         queryKey: ["post-feed"],
@@ -58,6 +63,7 @@ export function useUpdateProfileMutation() {
                     user: {
                       ...updatedUser,
                       avatarUrl: newAvatarUrl || updatedUser.avatarUrl,
+                      coverImageUrl: newCoverUrl || updatedUser.coverImageUrl,
                     },
                   };
                 }
@@ -71,14 +77,14 @@ export function useUpdateProfileMutation() {
       router.refresh();
 
       toast({
-        description: "Profile updated",
+        description: "Cập nhật hồ sơ thành công!",
       });
     },
     onError(error) {
       console.error(error);
       toast({
         variant: "destructive",
-        description: "Failed to update profile. Please try again.",
+        description: "Cập nhật thất bại. Vui lòng thử lại.",
       });
     },
   });

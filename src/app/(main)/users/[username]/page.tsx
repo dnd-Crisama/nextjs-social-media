@@ -8,6 +8,7 @@ import prisma from "@/lib/prisma";
 import { FollowerInfo, getUserDataSelect, UserData } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 import { formatDate } from "date-fns";
+import { CalendarDays } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -63,13 +64,8 @@ export default async function Page({ params: { username } }: PageProps) {
 
   return (
     <main className="flex w-full min-w-0 gap-5">
-      <div className="w-full min-w-0 space-y-5">
+      <div className="w-full min-w-0">
         <UserProfile user={user} loggedInUserId={loggedInUser.id} />
-        <div className="rounded-2xl bg-card p-5 shadow-sm">
-          <h2 className="text-center text-2xl font-bold">
-            {user.displayName}&apos;s posts
-          </h2>
-        </div>
         <UserPosts userId={user.id} />
       </div>
       <TrendsSidebar />
@@ -91,45 +87,84 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
   };
 
   return (
-    <div className="h-fit w-full space-y-5 rounded-2xl bg-card p-5 shadow-sm">
-      <UserAvatar
-        avatarUrl={user.avatarUrl}
-        size={250}
-        className="mx-auto size-full max-h-60 max-w-60 rounded-full"
-      />
-      <div className="flex flex-wrap gap-3 sm:flex-nowrap">
-        <div className="me-auto space-y-3">
-          <div>
-            <h1 className="text-3xl font-bold">{user.displayName}</h1>
-            <div className="text-muted-foreground">@{user.username}</div>
+    <div className="w-full rounded-2xl bg-card shadow-sm mb-5">
+      {/* Cover Image */}
+      <div className="relative h-48 sm:h-56 rounded-t-2xl overflow-hidden">
+        {user.coverImageUrl ? (
+          <img
+            src={user.coverImageUrl}
+            alt="Cover"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/15 to-secondary/60" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+      </div>
+
+      {/* Profile Content */}
+      <div className="px-5 pb-5">
+        {/* Avatar + Action buttons row */}
+        <div className="flex items-end justify-between -mt-12 mb-3 relative z-10">
+          <div className="ring-4 ring-card rounded-full shadow-md">
+            <UserAvatar
+              avatarUrl={user.avatarUrl}
+              size={96}
+              className="size-24 rounded-full"
+            />
           </div>
-          <div>Member since {formatDate(user.createdAt, "MMM d, yyyy")}</div>
-          <div className="flex items-center gap-3">
-            <span>
-              Posts:{" "}
-              <span className="font-semibold">
-                {formatNumber(user._count.posts)}
-              </span>
-            </span>
-            <FollowerCount userId={user.id} initialState={followerInfo} />
+          <div className="mt-14">
+            {user.id === loggedInUserId ? (
+              <EditProfileButton user={user} />
+            ) : (
+              <FollowButton userId={user.id} initialState={followerInfo} />
+            )}
           </div>
         </div>
-        {user.id === loggedInUserId ? (
-          <EditProfileButton user={user} />
-        ) : (
-          <FollowButton userId={user.id} initialState={followerInfo} />
-        )}
-      </div>
-      {user.bio && (
-        <>
-          <hr />
+
+        {/* Name & username */}
+        <div className="mb-2">
+          <h1 className="text-xl font-bold leading-tight">{user.displayName}</h1>
+          <div className="text-muted-foreground text-sm">@{user.username}</div>
+        </div>
+
+        {/* Bio */}
+        {user.bio && (
           <Linkify>
-            <div className="overflow-hidden whitespace-pre-line break-words">
+            <p className="text-sm mb-3 whitespace-pre-line break-words leading-relaxed">
               {user.bio}
-            </div>
+            </p>
           </Linkify>
-        </>
-      )}
+        )}
+
+        {/* Meta info */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-sm mb-4">
+          <span className="flex items-center gap-1.5">
+            <CalendarDays className="size-4 shrink-0" />
+            Member since {formatDate(user.createdAt, "MMMM yyyy")}
+          </span>
+        </div>
+
+        {/* Stats row */}
+        <div className="flex gap-5 text-sm">
+          <div className="flex items-baseline gap-1">
+            <span className="font-bold text-foreground">
+              {formatNumber(user._count.posts)}
+            </span>
+            <span className="text-muted-foreground">Posts</span>
+          </div>
+          <FollowerCount userId={user.id} initialState={followerInfo} />
+        </div>
+      </div>
+
+      {/* Posts tab bar */}
+      <div className="border-t border-border">
+        <div className="flex">
+          <div className="flex-1 py-3 text-center text-sm font-semibold border-b-2 border-primary text-primary cursor-default">
+          {user.displayName}&apos;s posts
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

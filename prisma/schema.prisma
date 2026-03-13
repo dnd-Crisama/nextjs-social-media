@@ -24,6 +24,7 @@ model User {
   passwordHash          String?
   googleId              String?        @unique
   avatarUrl             String?
+  coverImageUrl         String?
   bio                   String?
   sessions              Session[]
   posts                 Post[]

@@ -33,32 +33,57 @@ export default function UserTooltip({ children, user }: UserTooltipProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>
-          <div className="flex max-w-80 flex-col gap-3 break-words px-1 py-2.5 md:min-w-52">
-            <div className="flex items-center justify-between gap-2">
-              <Link href={`/users/${user.username}`}>
-                <UserAvatar size={70} avatarUrl={user.avatarUrl} />
-              </Link>
-              {loggedInUser.id !== user.id && (
-                <FollowButton userId={user.id} initialState={followerState} />
+        <TooltipContent className="p-0 overflow-hidden">
+          <div className="flex w-80 flex-col break-words">
+            {/* Cover image */}
+            <div className="relative h-28 w-full">
+              {user.coverImageUrl ? (
+                <img
+                  src={user.coverImageUrl}
+                  alt="Cover"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/15 to-secondary/60" />
               )}
             </div>
-            <div>
-              <Link href={`/users/${user.username}`}>
-                <div className="text-lg font-semibold hover:underline">
-                  {user.displayName}
-                </div>
-                <div className="text-muted-foreground">@{user.username}</div>
-              </Link>
+
+            {/* Content */}
+            <div className="flex flex-col gap-3 px-4 pb-4">
+              {/* Avatar + Follow button row */}
+              <div className="flex items-end justify-between gap-2 -mt-8 relative z-10">
+                <Link href={`/users/${user.username}`}>
+                  <div className="ring-2 ring-card rounded-full">
+                    <UserAvatar size={80} avatarUrl={user.avatarUrl} />
+                  </div>
+                </Link>
+                {loggedInUser.id !== user.id && (
+                  <FollowButton userId={user.id} initialState={followerState} />
+                )}
+              </div>
+
+              {/* Name & username */}
+              <div>
+                <Link href={`/users/${user.username}`}>
+                  <div className="text-lg font-semibold hover:underline">
+                    {user.displayName}
+                  </div>
+                  <div className="text-muted-foreground">@{user.username}</div>
+                </Link>
+              </div>
+
+              {/* Bio */}
+              {user.bio && (
+                <Linkify>
+                  <div className="line-clamp-4 whitespace-pre-line text-sm">
+                    {user.bio}
+                  </div>
+                </Linkify>
+              )}
+
+              {/* Follower count */}
+              <FollowerCount userId={user.id} initialState={followerState} />
             </div>
-            {user.bio && (
-              <Linkify>
-                <div className="line-clamp-4 whitespace-pre-line">
-                  {user.bio}
-                </div>
-              </Linkify>
-            )}
-            <FollowerCount userId={user.id} initialState={followerState} />
           </div>
         </TooltipContent>
       </Tooltip>

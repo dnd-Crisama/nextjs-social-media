@@ -6,6 +6,7 @@ export function getUserDataSelect(loggedInUserId: string) {
     username: true,
     displayName: true,
     avatarUrl: true,
+    coverImageUrl: true,
     bio: true,
     createdAt: true,
     followers: {

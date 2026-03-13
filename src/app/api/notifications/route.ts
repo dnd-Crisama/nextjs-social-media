@@ -16,9 +16,7 @@ export async function GET(req: NextRequest) {
     }
 
     const notifications = await prisma.notification.findMany({
-      where: {
-        recipientId: user.id,
-      },
+      where: { recipientId: user.id },
       include: notificationsInclude,
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
@@ -30,47 +28,38 @@ export async function GET(req: NextRequest) {
 
     const pageNotifications = notifications.slice(0, pageSize);
 
-    // For COMMENT notifications, find the most recent comment
-    // from the issuer on that post (no schema changes needed)
+    // For each COMMENT notification, find the comment from that issuer
+    // on that post that was created closest to (but not after) the notification.
+    // This correctly maps each notification to the comment that triggered it,
+    // even when the same user commented multiple times on the same post.
     const commentNotifications = pageNotifications.filter(
       (n) => n.type === "COMMENT" && n.postId,
     );
 
-    const issuerComments =
-      commentNotifications.length > 0
-        ? await prisma.comment.findMany({
-            where: {
-              OR: commentNotifications.map((n) => ({
-                postId: n.postId!,
-                userId: n.issuerId,
-              })),
-            },
-            orderBy: { createdAt: "desc" },
-            select: {
-              content: true,
-              postId: true,
-              userId: true,
-            },
-          })
-        : [];
+    const notificationsWithComment = await Promise.all(
+      pageNotifications.map(async (n) => {
+        if (n.type !== "COMMENT" || !n.postId) {
+          return { ...n, latestComment: null };
+        }
 
-    // Map: "postId_issuerId" -> latest comment content
-    const commentMap = new Map<string, string>();
-    for (const comment of issuerComments) {
-      const key = `${comment.postId}_${comment.userId}`;
-      if (!commentMap.has(key)) {
-        commentMap.set(key, comment.content);
-      }
-    }
+        // Find the comment from this issuer on this post that is closest
+        // in time to when the notification was created (≤ notif createdAt)
+        const matchingComment = await prisma.comment.findFirst({
+          where: {
+            postId: n.postId,
+            userId: n.issuerId,
+            createdAt: { lte: n.createdAt },
+          },
+          orderBy: { createdAt: "desc" }, // closest one before/at notification time
+          select: { content: true },
+        });
 
-    // Attach latestComment to each notification
-    const notificationsWithComment = pageNotifications.map((n) => ({
-      ...n,
-      latestComment:
-        n.type === "COMMENT" && n.postId
-          ? (commentMap.get(`${n.postId}_${n.issuerId}`) ?? null)
-          : null,
-    }));
+        return {
+          ...n,
+          latestComment: matchingComment?.content ?? null,
+        };
+      }),
+    );
 
     const data: NotificationsPage = {
       notifications: notificationsWithComment,

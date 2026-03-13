@@ -9,17 +9,14 @@ export async function GET(
 ) {
   try {
     const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
-
     const pageSize = 5;
 
     const { user } = await validateRequest();
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // Chỉ fetch root comments (parentId = null) — replies được fetch nested bên trong
     const comments = await prisma.comment.findMany({
-      where: { postId },
+      where: { postId, parentId: null },
       include: getCommentDataInclude(user.id),
       orderBy: { createdAt: "asc" },
       take: -pageSize - 1,

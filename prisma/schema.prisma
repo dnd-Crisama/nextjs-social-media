@@ -5,15 +5,16 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
-  previewFeatures = ["fullTextSearch"]
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
 }
 
 // Define database connection via the `DATABASE_URL` env var
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [unaccent]
 }
 
 model User {
@@ -94,12 +95,15 @@ enum MediaType {
 }
 
 model Comment {
-  id      String @id @default(cuid())
-  content String
-  userId  String
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  postId  String
-  post    Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id       String    @id @default(cuid())
+  content  String
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId   String
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
 
   createdAt DateTime @default(now())
 
@@ -149,4 +153,5 @@ enum NotificationType {
   LIKE
   FOLLOW
   COMMENT
+  MENTION
 }

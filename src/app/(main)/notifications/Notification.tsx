@@ -2,7 +2,7 @@ import UserAvatar from "@/components/UserAvatar";
 import { NotificationData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { NotificationType } from "@/generated/prisma";
-import { Heart, MessageCircle, User2 } from "lucide-react";
+import { AtSign, Heart, MessageCircle, User2 } from "lucide-react";
 import Link from "next/link";
 
 interface NotificationProps {
@@ -38,10 +38,20 @@ export default function Notification({ notification }: NotificationProps) {
       href: `/posts/${notification.postId}`,
       badgeColor: "bg-rose-500",
     },
+    MENTION: {
+      message: "mentioned you in a comment",
+      icon: <AtSign className="size-3.5 text-primary-foreground" />,
+      href: `/posts/${notification.postId}`,
+      badgeColor: "bg-violet-500",
+    },
   };
 
-  const { message, icon, href, badgeColor } =
-    notificationTypeMap[notification.type];
+  const notifConfig = notificationTypeMap[notification.type as keyof typeof notificationTypeMap];
+
+  // Fallback nếu Prisma client chưa regenerate và không nhận MENTION
+  if (!notifConfig) return null;
+
+  const { message, icon, href, badgeColor } = notifConfig;
 
   return (
     <Link href={href} className="block group">
@@ -52,12 +62,10 @@ export default function Notification({ notification }: NotificationProps) {
           !notification.read && "border-l-[3px] border-l-primary bg-primary/5",
         )}
       >
-        {/* Unread dot */}
         {!notification.read && (
           <span className="absolute right-4 top-4 size-2 rounded-full bg-primary" />
         )}
 
-        {/* Badge icon (top-left, large) */}
         <div className="flex shrink-0 flex-col items-center gap-2 pt-0.5">
           <div
             className={cn(
@@ -69,9 +77,7 @@ export default function Notification({ notification }: NotificationProps) {
           </div>
         </div>
 
-        {/* Main content */}
         <div className="min-w-0 flex-1 space-y-2.5">
-          {/* Avatar + name + action */}
           <div className="flex items-center gap-2.5">
             <UserAvatar avatarUrl={notification.issuer.avatarUrl} size={40} />
             <p className="text-sm leading-snug">
@@ -82,11 +88,10 @@ export default function Notification({ notification }: NotificationProps) {
             </p>
           </div>
 
-          {/* COMMENT: post context + comment body */}
-          {notification.type === "COMMENT" &&
+          {/* COMMENT / MENTION: hiển thị post context + nội dung comment */}
+          {(notification.type === "COMMENT" || notification.type === "MENTION") &&
             (notification.post || notification.latestComment) && (
               <div className="ml-0.5 rounded-xl border border-border/60 bg-muted/40 overflow-hidden">
-                {/* Post context line */}
                 {notification.post && (
                   <div className="flex items-baseline gap-1.5 border-b border-border/40 px-3 py-2">
                     <span className="shrink-0 text-xs font-medium text-muted-foreground">
@@ -97,7 +102,6 @@ export default function Notification({ notification }: NotificationProps) {
                     </span>
                   </div>
                 )}
-                {/* Their comment */}
                 {notification.latestComment && (
                   <div className="px-3 py-2.5">
                     <p className="text-sm text-foreground leading-relaxed line-clamp-3 whitespace-pre-line">
@@ -108,7 +112,6 @@ export default function Notification({ notification }: NotificationProps) {
               </div>
             )}
 
-          {/* LIKE: just post preview */}
           {notification.type === "LIKE" && notification.post && (
             <div className="ml-0.5 rounded-xl border border-border/60 bg-muted/40 px-3 py-2.5">
               <p className="line-clamp-2 whitespace-pre-line text-sm text-muted-foreground leading-relaxed">

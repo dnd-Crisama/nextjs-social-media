@@ -15,6 +15,7 @@ import { useSubmitPostMutation } from "./mutations";
 import "./styles.css";
 import useMediaUpload, { Attachment } from "./useMediaUpload";
 import { useDropzone } from "@uploadthing/react";
+import EmojiPicker from "@/components/EmojiPicker";
 
 export default function PostEditor() {
   const { user } = useSession();
@@ -127,6 +128,11 @@ export default function PostEditor() {
         <AddAttachmentsButton
           onFilesSelected={startUpload}
           disabled={isUploading || attachments.length >= 5}
+        />
+
+        {/* Emoji picker */}
+        <EmojiPicker
+          onEmojiSelect={(emoji) => editor?.commands.insertContent(emoji)}
         />
 
         {/* Nút Đăng bài */}

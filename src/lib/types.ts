@@ -6,22 +6,15 @@ export function getUserDataSelect(loggedInUserId: string) {
     username: true,
     displayName: true,
     avatarUrl: true,
-    coverImageUrl: true,
+    coverImageUrl: true, 
     bio: true,
     createdAt: true,
     followers: {
-      where: {
-        followerId: loggedInUserId,
-      },
-      select: {
-        followerId: true,
-      },
+      where: { followerId: loggedInUserId },
+      select: { followerId: true },
     },
     _count: {
-      select: {
-        posts: true,
-        followers: true,
-      },
+      select: { posts: true, followers: true },
     },
   } satisfies Prisma.UserSelect;
 }
@@ -32,31 +25,18 @@ export type UserData = Prisma.UserGetPayload<{
 
 export function getPostDataInclude(loggedInUserId: string) {
   return {
-    user: {
-      select: getUserDataSelect(loggedInUserId),
-    },
+    user: { select: getUserDataSelect(loggedInUserId) },
     attachments: true,
     likes: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
+      where: { userId: loggedInUserId },
+      select: { userId: true },
     },
     bookmarks: {
-      where: {
-        userId: loggedInUserId,
-      },
-      select: {
-        userId: true,
-      },
+      where: { userId: loggedInUserId },
+      select: { userId: true },
     },
     _count: {
-      select: {
-        likes: true,
-        comments: true,
-      },
+      select: { likes: true, comments: true },
     },
   } satisfies Prisma.PostInclude;
 }
@@ -70,17 +50,41 @@ export interface PostsPage {
   nextCursor: string | null;
 }
 
+// Base include (no replies) — dùng cho level 2 (tầng sâu nhất)
+export function getCommentDataIncludeBase(loggedInUserId: string) {
+  return {
+    user: { select: getUserDataSelect(loggedInUserId) },
+  } satisfies Prisma.CommentInclude;
+}
+
+// Full include (có replies 2 tầng) — dùng cho root và level 1
 export function getCommentDataInclude(loggedInUserId: string) {
   return {
-    user: {
-      select: getUserDataSelect(loggedInUserId),
+    user: { select: getUserDataSelect(loggedInUserId) },
+    replies: {
+      include: {
+        user: { select: getUserDataSelect(loggedInUserId) },
+        replies: {
+          include: {
+            user: { select: getUserDataSelect(loggedInUserId) },
+          },
+          orderBy: { createdAt: "asc" as const },
+        },
+      },
+      orderBy: { createdAt: "asc" as const },
     },
   } satisfies Prisma.CommentInclude;
 }
 
-export type CommentData = Prisma.CommentGetPayload<{
-  include: ReturnType<typeof getCommentDataInclude>;
+// Base Prisma type (level 2 — không có replies)
+type CommentDataBase = Prisma.CommentGetPayload<{
+  include: ReturnType<typeof getCommentDataIncludeBase>;
 }>;
+
+// Manual recursive type để TypeScript không bị confused bởi nested Prisma types
+export interface CommentData extends CommentDataBase {
+  replies: CommentData[];
+}
 
 export interface CommentsPage {
   comments: CommentData[];
@@ -96,9 +100,7 @@ export const notificationsInclude = {
     },
   },
   post: {
-    select: {
-      content: true,
-    },
+    select: { content: true },
   },
 } satisfies Prisma.NotificationInclude;
 

@@ -15,17 +15,58 @@ export async function GET(req: NextRequest) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Fetch posts with group info to filter based on membership
     const posts = await prisma.post.findMany({
-      include: getPostDataInclude(user.id),
+      include: {
+        ...getPostDataInclude(user.id),
+        group: {
+          select: {
+            id: true,
+            isPublic: true,
+            name: true,
+            avatarUrl: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
-      take: pageSize + 1,
+      take: pageSize * 3, // Fetch more to account for filtering
       cursor: cursor ? { id: cursor } : undefined,
     });
 
-    const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+    // Filter posts based on group membership
+    let filteredPosts = [];
+    for (const post of posts) {
+      // Allow personal posts (no group)
+      if (!post.group) {
+        filteredPosts.push(post);
+        continue;
+      }
+
+      // For any group post (public or private), check if user is an APPROVED member
+      const membership = await prisma.groupMember.findUnique({
+        where: {
+          groupId_userId: {
+            groupId: post.group.id,
+            userId: user.id,
+          },
+        },
+      });
+
+      if (membership && membership.status === "APPROVED") {
+        filteredPosts.push(post);
+      }
+    }
+
+    // Get the first pageSize posts and find cursor for next page
+    const paginatedPosts = filteredPosts.slice(0, pageSize);
+    
+    let nextCursor: string | null = null;
+    if (filteredPosts.length > pageSize && filteredPosts[pageSize]?.id) {
+      nextCursor = filteredPosts[pageSize].id;
+    }
 
     const data: PostsPage = {
-      posts: posts.slice(0, pageSize),
+      posts: paginatedPosts,
       nextCursor,
     };
 

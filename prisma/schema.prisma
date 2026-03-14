@@ -36,6 +36,8 @@ model User {
   comments              Comment[]
   receivedNotifications Notification[] @relation("Recipient")
   issuedNotifications   Notification[] @relation("Issuer")
+  createdGroups         Group[]        @relation("Creator")
+  groupMemberships      GroupMember[]
 
   createdAt DateTime @default(now())
 
@@ -66,6 +68,8 @@ model Post {
   content             String
   userId              String
   user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId             String?
+  group               Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
   attachments         Media[]
   likes               Like[]
   bookmarks           Bookmark[]
@@ -74,6 +78,8 @@ model Post {
 
   createdAt DateTime @default(now())
 
+  @@index([groupId])
+  @@index([userId, createdAt])
   @@map("posts")
 }
 
@@ -149,9 +155,57 @@ model Notification {
   @@map("notifications")
 }
 
+model Group {
+  id            String        @id @default(cuid())
+  name          String
+  description   String?
+  avatarUrl     String?
+  coverImageUrl String?
+  userId        String
+  creator       User          @relation("Creator", fields: [userId], references: [id], onDelete: Cascade)
+  isPublic      Boolean       @default(true)
+  members       GroupMember[]
+  posts         Post[]
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("groups")
+}
+
+model GroupMember {
+  id        String             @id @default(cuid())
+  groupId   String
+  group     Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      GroupMemberRole    @default(MEMBER)
+  status    GroupMemberStatus  @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+enum GroupMemberRole {
+  ADMIN
+  MEMBER
+}
+
+enum GroupMemberStatus {
+  PENDING
+  APPROVED
+}
+
 enum NotificationType {
   LIKE
   FOLLOW
   COMMENT
   MENTION
+  GROUP_JOIN_REQUEST
+  GROUP_JOIN_APPROVED
+  GROUP_JOIN_REJECTED
 }

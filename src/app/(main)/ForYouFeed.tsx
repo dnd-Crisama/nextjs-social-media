@@ -26,7 +26,7 @@ export default function ForYouFeed() {
         )
         .json<PostsPage>(),
     initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
   });
 
   const posts = data?.pages.flatMap((page) => page.posts) || [];

@@ -27,15 +27,46 @@ export async function GET(req: NextRequest) {
       orderBy: {
         createdAt: "desc",
       },
-      take: pageSize + 1,
+      take: pageSize * 3, // Fetch more to account for filtering
       cursor: cursor ? { id: cursor } : undefined,
     });
 
-    const nextCursor =
-      bookmarks.length > pageSize ? bookmarks[pageSize].id : null;
+    // Filter posts based on group membership
+    let filteredBookmarks = [];
+    for (const bookmark of bookmarks) {
+      const post = bookmark.post;
+      
+      // Allow personal posts (no group)
+      if (!post.group) {
+        filteredBookmarks.push(bookmark);
+        continue;
+      }
+
+      // For group posts, check if user is an APPROVED member
+      const membership = await prisma.groupMember.findUnique({
+        where: {
+          groupId_userId: {
+            groupId: post.groupId,
+            userId: user.id,
+          },
+        },
+      });
+
+      if (membership && membership.status === "APPROVED") {
+        filteredBookmarks.push(bookmark);
+      }
+    }
+
+    const paginatedBookmarks = filteredBookmarks.slice(0, pageSize);
+    
+    // Only set nextCursor if we have more items than pageSize
+    let nextCursor: string | null = null;
+    if (filteredBookmarks.length > pageSize && filteredBookmarks[pageSize]?.id) {
+      nextCursor = filteredBookmarks[pageSize].id;
+    }
 
     const data: PostsPage = {
-      posts: bookmarks.slice(0, pageSize).map((bookmark) => bookmark.post),
+      posts: paginatedBookmarks.map((bookmark) => bookmark.post),
       nextCursor,
     };
 

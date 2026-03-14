@@ -59,7 +59,31 @@ async function handlePostSearch(q: string, userId: string, cursor?: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  return Response.json({ posts, nextCursor } satisfies PostsPage);
+  // Filter posts based on group membership
+  let filteredPosts = [];
+  for (const post of posts) {
+    // Allow personal posts (no group)
+    if (!post.group) {
+      filteredPosts.push(post);
+      continue;
+    }
+
+    // For group posts, check if user is an APPROVED member
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId: post.groupId,
+          userId,
+        },
+      },
+    });
+
+    if (membership && membership.status === "APPROVED") {
+      filteredPosts.push(post);
+    }
+  }
+
+  return Response.json({ posts: filteredPosts, nextCursor: null } satisfies PostsPage);
 }
 
 // --- User search ---

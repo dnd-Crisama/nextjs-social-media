@@ -16,6 +16,9 @@ import "./styles.css";
 import useMediaUpload, { Attachment } from "./useMediaUpload";
 import { useDropzone } from "@uploadthing/react";
 import EmojiPicker from "@/components/EmojiPicker";
+import { useQuery } from "@tanstack/react-query";
+import kyInstance from "@/lib/ky";
+import { GroupsPage } from "@/lib/types";
 
 export default function PostEditor() {
   const { user } = useSession();
@@ -23,6 +26,22 @@ export default function PostEditor() {
 
   // 1. Hook xử lý text
   const [input, setInput] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+
+  // Fetch user's joined groups
+  const { data: groupsData } = useQuery({
+    queryKey: ["groups", "my-groups"],
+    queryFn: async () => {
+      try {
+        const response = await kyInstance
+          .get("/api/groups/my-groups?limit=20")
+          .json<GroupsPage>();
+        return response.groups;
+      } catch {
+        return [];
+      }
+    },
+  });
 
   // 2. Hook xử lý media (ảnh/video)
   const {
@@ -70,6 +89,7 @@ export default function PostEditor() {
       {
         content: input,
         mediaIds: attachments.map((a) => a.mediaId).filter(Boolean) as string[],
+        groupId: selectedGroupId || undefined,
       },
       {
         onSuccess: () => {
@@ -77,6 +97,7 @@ export default function PostEditor() {
           editor?.commands.clearContent();
           setInput("");
           resetMediaUploads();
+          setSelectedGroupId(null);
         },
       }
     );
@@ -90,6 +111,26 @@ export default function PostEditor() {
   }
   return (
     <div className="flex flex-col gap-5 rounded-2xl bg-card p-5 shadow-sm">
+      {/* Group selector */}
+      {groupsData && groupsData.length > 0 && (
+        <div className="flex items-center gap-2">
+          <label htmlFor="group-select" className="text-sm font-medium">Post to:</label>
+          <select
+            id="group-select"
+            value={selectedGroupId || "personal"}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedGroupId(e.target.value === "personal" ? null : e.target.value)}
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="personal">Your Feed</option>
+            {groupsData.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Khu vực nhập liệu (Avatar + Khung Text) */}
       <div className="flex gap-5">
       <UserAvatar avatarUrl={user.avatarUrl} className="hidden sm:inline" />

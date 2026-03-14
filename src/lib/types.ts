@@ -26,6 +26,13 @@ export type UserData = Prisma.UserGetPayload<{
 export function getPostDataInclude(loggedInUserId: string) {
   return {
     user: { select: getUserDataSelect(loggedInUserId) },
+    group: {
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+      },
+    },
     attachments: true,
     likes: {
       where: { userId: loggedInUserId },
@@ -133,4 +140,48 @@ export interface NotificationCountInfo {
 
 export interface MessageCountInfo {
   unreadCount: number;
+}
+
+export function getGroupDataSelect() {
+  return {
+    id: true,
+    name: true,
+    description: true,
+    avatarUrl: true,
+    coverImageUrl: true,
+    userId: true,
+    isPublic: true,
+    createdAt: true,
+    _count: {
+      select: { members: true, posts: true },
+    },
+  } satisfies Prisma.GroupSelect;
+}
+
+export type GroupData = Prisma.GroupGetPayload<{
+  select: ReturnType<typeof getGroupDataSelect>;
+}>;
+
+export function getGroupDetailInclude(loggedInUserId: string) {
+  return {
+    creator: { select: getUserDataSelect(loggedInUserId) },
+    members: {
+      include: {
+        user: { select: getUserDataSelect(loggedInUserId) },
+      },
+      orderBy: { createdAt: "asc" as const },
+    },
+    _count: {
+      select: { members: true, posts: true },
+    },
+  } satisfies Prisma.GroupInclude;
+}
+
+export type GroupDetail = Prisma.GroupGetPayload<{
+  include: ReturnType<typeof getGroupDetailInclude>;
+}>;
+
+export interface GroupsPage {
+  groups: GroupData[];
+  nextCursor: string | null;
 }

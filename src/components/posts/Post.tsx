@@ -43,12 +43,25 @@ export default function Post({ post }: PostProps) {
                 {post.user.displayName}
               </Link>
             </UserTooltip>
-            <Link
-              href={`/posts/${post.id}`}
-              className="block text-sm text-muted-foreground hover:underline"
-              suppressHydrationWarning>
-              {formatRelativeDate(post.createdAt)}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/posts/${post.id}`}
+                className="text-sm text-muted-foreground hover:underline"
+                suppressHydrationWarning>
+                {formatRelativeDate(post.createdAt)}
+              </Link>
+              {post.group && (
+                <>
+                  <span className="text-muted-foreground">·</span>
+                  <Link
+                    href={`/groups/${post.group.id}`}
+                    className="text-sm text-muted-foreground hover:underline"
+                  >
+                    {post.group.name}
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
         {post.user.id === user.id && (

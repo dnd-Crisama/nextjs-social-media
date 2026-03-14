@@ -2,7 +2,7 @@ import UserAvatar from "@/components/UserAvatar";
 import { NotificationData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { NotificationType } from "@/generated/prisma";
-import { AtSign, Heart, MessageCircle, User2 } from "lucide-react";
+import { AtSign, CheckCircle, Heart, MessageCircle, User2, UserPlus, XCircle } from "lucide-react";
 import Link from "next/link";
 
 interface NotificationProps {
@@ -43,6 +43,24 @@ export default function Notification({ notification }: NotificationProps) {
       icon: <AtSign className="size-3.5 text-primary-foreground" />,
       href: `/posts/${notification.postId}`,
       badgeColor: "bg-violet-500",
+    },
+    GROUP_JOIN_REQUEST: {
+      message: "requested to join your group",
+      icon: <UserPlus className="size-3.5 text-primary-foreground" />,
+      href: `/groups/${(notification as any).groupId}`,
+      badgeColor: "bg-blue-500",
+    },
+    GROUP_JOIN_APPROVED: {
+      message: "approved your group join request",
+      icon: <CheckCircle className="size-3.5 text-primary-foreground" />,
+      href: `/groups/${(notification as any).groupId}`,
+      badgeColor: "bg-emerald-500",
+    },
+    GROUP_JOIN_REJECTED: {
+      message: "rejected your group join request",
+      icon: <XCircle className="size-3.5 text-primary-foreground" />,
+      href: `/groups`,
+      badgeColor: "bg-red-500",
     },
   };
 

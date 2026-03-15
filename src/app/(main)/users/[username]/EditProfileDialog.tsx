@@ -27,10 +27,16 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, ImageIcon, X } from "lucide-react";
 import Image, { StaticImageData } from "next/image";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Resizer from "react-image-file-resizer";
 import { useUpdateProfileMutation } from "./mutations";
+
+interface FrameData {
+  id: string;
+  name: string;
+  type: string;
+}
 
 interface EditProfileDialogProps {
   user: UserData;
@@ -48,6 +54,8 @@ export default function EditProfileDialog({
     defaultValues: {
       displayName: user.displayName,
       bio: user.bio || "",
+      avatarFrameId: user.avatarFrameId || undefined,
+      bannerFrameId: user.bannerFrameId || undefined,
     },
   });
 
@@ -55,6 +63,29 @@ export default function EditProfileDialog({
 
   const [croppedAvatar, setCroppedAvatar] = useState<Blob | null>(null);
   const [croppedCover, setCroppedCover] = useState<Blob | null>(null);
+  const [ownedFrames, setOwnedFrames] = useState<FrameData[]>([]);
+  const [loadingFrames, setLoadingFrames] = useState(true);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchOwnedFrames = async () => {
+      try {
+        const res = await fetch("/api/user-frames");
+        if (res.ok) {
+          const frames = await res.json();
+          setOwnedFrames(frames);
+        }
+      } catch (error) {
+        console.error("Failed to fetch owned frames:", error);
+      } finally {
+        setLoadingFrames(false);
+      }
+    };
+
+    setLoadingFrames(true);
+    fetchOwnedFrames();
+  }, [open]);
 
   async function onSubmit(values: UpdateUserProfileValues) {
     const newAvatarFile = croppedAvatar
@@ -141,6 +172,64 @@ export default function EditProfileDialog({
                       rows={3}
                       {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="avatarFrameId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Avatar Frame</FormLabel>
+                  <FormControl>
+                    <select
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? null : e.target.value)
+                      }
+                      disabled={loadingFrames}
+                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">No frame</option>
+                      {ownedFrames
+                        .filter((f) => f.type === "AVATAR")
+                        .map((frame) => (
+                          <option key={frame.id} value={frame.id}>
+                            {frame.name}
+                          </option>
+                        ))}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bannerFrameId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Banner Frame</FormLabel>
+                  <FormControl>
+                    <select
+                      value={field.value || ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? null : e.target.value)
+                      }
+                      disabled={loadingFrames}
+                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">No frame</option>
+                      {ownedFrames
+                        .filter((f) => f.type === "PROFILE")
+                        .map((frame) => (
+                          <option key={frame.id} value={frame.id}>
+                            {frame.name}
+                          </option>
+                        ))}
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

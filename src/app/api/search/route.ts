@@ -46,11 +46,14 @@ async function handlePostSearch(q: string, userId: string, cursor?: string) {
   `;
 
   const ids = rows.map((r) => r.id);
-  const nextCursor = ids.length > pageSize ? ids[pageSize] : null;
+  let nextCursor: string | null = null;
+  if (ids.length > pageSize && ids[pageSize]) {
+    nextCursor = ids[pageSize];
+  }
   const pageIds = ids.slice(0, pageSize);
 
   if (!pageIds.length) {
-    return Response.json({ posts: [], nextCursor: null } satisfies PostsPage);
+    return Response.json({ posts: [], nextCursor: nextCursor } satisfies PostsPage);
   }
 
   const posts = await prisma.post.findMany({
@@ -106,11 +109,14 @@ async function handleUserSearch(q: string, loggedInUserId: string, cursor?: stri
   `;
 
   const ids = rows.map((r) => r.id);
-  const nextCursor = ids.length > pageSize ? ids[pageSize] : null;
+  let nextCursor: string | null = null;
+  if (ids.length > pageSize && ids[pageSize]) {
+    nextCursor = ids[pageSize];
+  }
   const pageIds = ids.slice(0, pageSize);
 
   if (!pageIds.length) {
-    return Response.json({ users: [], nextCursor: null });
+    return Response.json({ users: [], nextCursor: nextCursor });
   }
 
   const users = await prisma.user.findMany({

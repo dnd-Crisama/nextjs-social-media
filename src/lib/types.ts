@@ -8,6 +8,10 @@ export function getUserDataSelect(loggedInUserId: string) {
     avatarUrl: true,
     coverImageUrl: true, 
     bio: true,
+    avatarFrameId: true,
+    bannerFrameId: true,
+    avatarFrame: true,
+    bannerFrame: true,
     createdAt: true,
     followers: {
       where: { followerId: loggedInUserId },
@@ -116,7 +120,7 @@ export type NotificationData = Prisma.NotificationGetPayload<{
 }>;
 
 export interface NotificationsPage {
-  notifications: NotificationData[];
+  notifications: (NotificationData & { latestComment: string | null })[];
   nextCursor: string | null;
 }
 

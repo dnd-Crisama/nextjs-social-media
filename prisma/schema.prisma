@@ -27,6 +27,11 @@ model User {
   avatarUrl             String?
   coverImageUrl         String?
   bio                   String?
+  role                  UserRole       @default(USER)
+  avatarFrameId         String?
+  avatarFrame           Frame?         @relation("UserAvatarFrame", fields: [avatarFrameId], references: [id], onDelete: SetNull)
+  bannerFrameId         String?
+  bannerFrame           Frame?         @relation("UserBannerFrame", fields: [bannerFrameId], references: [id], onDelete: SetNull)
   sessions              Session[]
   posts                 Post[]
   following             Follow[]       @relation("Following")
@@ -38,6 +43,9 @@ model User {
   issuedNotifications   Notification[] @relation("Issuer")
   createdGroups         Group[]        @relation("Creator")
   groupMemberships      GroupMember[]
+  ownedFrames           FrameOwnership[] @relation("UserFrameOwnerships")
+  activities            UserActivity[] @relation("UserActivities")
+  balance               UserBalance?
 
   createdAt DateTime @default(now())
 
@@ -208,4 +216,86 @@ enum NotificationType {
   GROUP_JOIN_REQUEST
   GROUP_JOIN_APPROVED
   GROUP_JOIN_REJECTED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum FrameType {
+  AVATAR
+  PROFILE
+}
+
+enum ActivityType {
+  DAILY_CHECKIN
+  CREATE_POST
+  LIKE_POST
+  COMMENT_POST
+}
+
+model Frame {
+  id            String           @id @default(cuid())
+  name          String
+  description   String?
+  imageUrl      String
+  price         Float            @default(0)
+  spointCost    Int              @default(0)
+  type          FrameType
+  userAvatarUse User[]           @relation("UserAvatarFrame")
+  userBannerUse User[]           @relation("UserBannerFrame")
+  ownerships    FrameOwnership[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("frames")
+}
+
+model FrameOwnership {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation("UserFrameOwnerships", fields: [userId], references: [id], onDelete: Cascade)
+  frameId String
+  frame   Frame  @relation(fields: [frameId], references: [id], onDelete: Cascade)
+
+  ownedAt DateTime @default(now())
+
+  @@unique([userId, frameId])
+  @@index([userId])
+  @@index([frameId])
+  @@map("frame_ownerships")
+}
+
+model ActivityReward {
+  activityType ActivityType @id
+  spointReward Int          @default(0)
+  updatedAt    DateTime     @updatedAt
+
+  @@map("activity_rewards")
+}
+
+model UserActivity {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
+  activityType ActivityType
+  earnedAt     DateTime     @default(now())
+
+  @@unique([userId, activityType, earnedAt(sort: Desc)])
+  @@index([userId])
+  @@index([earnedAt])
+  @@map("user_activities")
+}
+
+model UserBalance {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pointsBalance   Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_balances")
 }

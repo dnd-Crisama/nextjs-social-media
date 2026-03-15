@@ -1,5 +1,6 @@
 import SearchField from "@/components/SearchField";
 import UserButton from "@/components/UserButton";
+import BalanceDisplay from "@/components/BalanceDisplay";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -10,6 +11,7 @@ export default function Navbar() {
           StarRail
         </Link>
         <SearchField />
+        <BalanceDisplay />
         <UserButton className="sm:ms-auto" />
       </div>
     </header>

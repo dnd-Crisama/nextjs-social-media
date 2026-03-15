@@ -3,8 +3,9 @@
 import { logout } from "@/app/(auth)/actions";
 import { useSession } from "@/app/(main)/SessionProvider";
 import { cn } from "@/lib/utils";
+import { isAdmin } from "@/lib/admin";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, LogOutIcon, Monitor, Moon, Sun, UserIcon } from "lucide-react";
+import { Check, LogOutIcon, Monitor, Moon, Sun, UserIcon, Shield } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import {
@@ -32,6 +33,8 @@ export default function UserButton({ className }: UserButtonProps) {
 
   const queryClient = useQueryClient();
 
+  const userIsAdmin = isAdmin(user);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -48,6 +51,24 @@ export default function UserButton({ className }: UserButtonProps) {
             Profile
           </DropdownMenuItem>
         </Link>
+        <Link href="/explore-frames">
+          <DropdownMenuItem>
+            <span className="mr-2 size-4">⭐</span>
+            Explore Frames
+          </DropdownMenuItem>
+        </Link>
+        {userIsAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <Link href="/admin">
+              <DropdownMenuItem>
+                <Shield className="mr-2 size-4" />
+                Admin Panel
+              </DropdownMenuItem>
+            </Link>
+          </>
+        )}
+        <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Monitor className="mr-2 size-4" />

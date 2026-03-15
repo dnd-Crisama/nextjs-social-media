@@ -61,13 +61,13 @@ export async function GET(req: NextRequest) {
     
     // Only set nextCursor if we have more items than pageSize
     let nextCursor: string | null = null;
-    if (filteredBookmarks.length > pageSize && filteredBookmarks[pageSize]?.id) {
+    if (filteredBookmarks.length > pageSize && filteredBookmarks[pageSize]) {
       nextCursor = filteredBookmarks[pageSize].id;
     }
 
     const data: PostsPage = {
       posts: paginatedBookmarks.map((bookmark) => bookmark.post),
-      nextCursor,
+      nextCursor: nextCursor,
     };
 
     return Response.json(data);

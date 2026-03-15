@@ -100,6 +100,30 @@ export const fileRouter = {
   
         return { mediaId: media.id };
       }),
+
+    groupAvatar: f({
+      image: { maxFileSize: "4MB" }, 
+    })
+      .middleware(async () => {
+        const { user } = await validateRequest();
+        if (!user) throw new UploadThingError("Unauthorized");
+        return { userId: user.id };
+      })
+      .onUploadComplete(async ({ file }) => {
+        return { url: file.url };
+      }),
+
+    groupCoverImage: f({
+      image: { maxFileSize: "8MB" },
+    })
+      .middleware(async () => {
+        const { user } = await validateRequest();
+        if (!user) throw new UploadThingError("Unauthorized");
+        return { userId: user.id };
+      })
+      .onUploadComplete(async ({ file }) => {
+        return { url: file.url };
+      }),
 } satisfies FileRouter;
 
 export type AppFileRouter = typeof fileRouter;

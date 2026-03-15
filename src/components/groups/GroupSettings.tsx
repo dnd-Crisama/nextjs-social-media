@@ -57,7 +57,8 @@ export default function GroupSettings({ group }: GroupSettingsProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { toast } = useToast();
-  const { startUpload } = useUploadThing("attachment");
+  const { startUpload: startAvatarUpload } = useUploadThing("groupAvatar");
+  const { startUpload: startCoverUpload } = useUploadThing("groupCoverImage");
 
   const {
     register,
@@ -131,7 +132,7 @@ export default function GroupSettings({ group }: GroupSettingsProps) {
       // Upload avatar if changed
       if (avatarFile) {
         setIsUploading(true);
-        const avatarRes = await startUpload([avatarFile]);
+        const avatarRes = await startAvatarUpload([avatarFile]);
         if (avatarRes && avatarRes.length > 0) {
           avatarUrl = avatarRes[0].url;
         }
@@ -141,7 +142,7 @@ export default function GroupSettings({ group }: GroupSettingsProps) {
       // Upload cover if changed
       if (coverFile) {
         setIsUploading(true);
-        const coverRes = await startUpload([coverFile]);
+        const coverRes = await startCoverUpload([coverFile]);
         if (coverRes && coverRes.length > 0) {
           coverImageUrl = coverRes[0].url;
         }

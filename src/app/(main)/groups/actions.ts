@@ -4,6 +4,7 @@ import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getGroupDataSelect, getGroupDetailInclude } from "@/lib/types";
 import { createGroupSchema, updateGroupSchema } from "@/lib/validation";
+import { UTApi } from "uploadthing/server";
 
 export async function createGroup(input: {
   name: string;
@@ -53,7 +54,7 @@ export async function updateGroupSettings(
   // Check if user is the group creator
   const group = await prisma.group.findUnique({
     where: { id: groupId },
-    select: { userId: true },
+    select: { userId: true, avatarUrl: true, coverImageUrl: true },
   });
 
   if (!group) throw new Error("Group not found");
@@ -63,6 +64,16 @@ export async function updateGroupSettings(
   }
 
   const updates = updateGroupSchema.parse(input);
+
+  if (input.avatarUrl && group.avatarUrl && input.avatarUrl !== group.avatarUrl) {
+    const key = group.avatarUrl.substring(group.avatarUrl.lastIndexOf("/") + 1);
+    if (key) await new UTApi().deleteFiles(key);
+  }
+
+  if (input.coverImageUrl && group.coverImageUrl && input.coverImageUrl !== group.coverImageUrl) {
+    const key = group.coverImageUrl.substring(group.coverImageUrl.lastIndexOf("/") + 1);
+    if (key) await new UTApi().deleteFiles(key);
+  }
 
   const updatedGroup = await prisma.group.update({
     where: { id: groupId },
@@ -81,13 +92,23 @@ export async function deleteGroup(groupId: string) {
   // Check if user is the group creator
   const group = await prisma.group.findUnique({
     where: { id: groupId },
-    select: { userId: true },
+    select: { userId: true, avatarUrl: true, coverImageUrl: true },
   });
 
   if (!group) throw new Error("Group not found");
 
   if (group.userId !== user.id) {
     throw new Error("Only group creator can delete the group");
+  }
+
+  if (group.avatarUrl) {
+    const key = group.avatarUrl.substring(group.avatarUrl.lastIndexOf("/") + 1);
+    if (key) await new UTApi().deleteFiles(key);
+  }
+
+  if (group.coverImageUrl) {
+    const key = group.coverImageUrl.substring(group.coverImageUrl.lastIndexOf("/") + 1);
+    if (key) await new UTApi().deleteFiles(key);
   }
 
   await prisma.group.delete({

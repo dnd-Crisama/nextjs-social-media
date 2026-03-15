@@ -46,6 +46,8 @@ model User {
   ownedFrames           FrameOwnership[] @relation("UserFrameOwnerships")
   activities            UserActivity[] @relation("UserActivities")
   balance               UserBalance?
+  questProgresses       QuestProgress[]
+  questClaims           QuestClaim[]
 
   createdAt DateTime @default(now())
 
@@ -287,6 +289,28 @@ model UserActivity {
   @@index([userId])
   @@index([earnedAt])
   @@map("user_activities")
+}
+
+model QuestProgress {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType ActivityType
+  completedAt  DateTime     @default(now())
+
+  @@index([userId])
+  @@map("quest_progress")
+}
+
+model QuestClaim {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType ActivityType
+  claimedAt    DateTime     @default(now())
+
+  @@index([userId])
+  @@map("quest_claims")
 }
 
 model UserBalance {

@@ -194,7 +194,7 @@ function SelectedUserTag({ user, onRemove }: SelectedUserTagProps) {
       className="flex items-center gap-2 rounded-full border p-1 hover:bg-muted/50"
     >
        {/* Fix nhẹ: Ép kiểu string nếu thư viện trả về sai type cho avatarUrl */}
-      <UserAvatar avatarUrl={user.image as string | undefined | null} size={24} />
+      <UserAvatar avatarUrl={user.image as string | undefined | null} size={24}  />
       <p className="font-bold">{user.name}</p>
       <X className="mx-2 size-5 text-muted-foreground" />
     </button>

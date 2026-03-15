@@ -44,14 +44,15 @@ export default function Comment({ comment, post, depth = 0 }: CommentProps) {
       <div className="group/comment flex gap-3 py-2">
         {/* Avatar */}
         <span className="hidden sm:inline shrink-0">
-          <UserTooltip user={comment.user}>
-            <Link href={`/users/${comment.user.username}`}>
-              <UserAvatar
-                avatarUrl={comment.user.avatarUrl}
-                size={depth === 0 ? 36 : 28}
-              />
-            </Link>
-          </UserTooltip>
+              <UserTooltip user={comment.user}>
+                <Link href={`/users/${comment.user.username}`}>
+                  <UserAvatar
+                    avatarUrl={comment.user.avatarUrl}
+                    size={depth === 0 ? 36 : 28}
+                    frame={comment.user.avatarFrame}
+                  />
+                </Link>
+              </UserTooltip>
         </span>
 
         {/* Bubble + actions cùng hàng */}

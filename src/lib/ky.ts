@@ -6,6 +6,8 @@ const kyInstance = ky.create({
       if (key.endsWith("At")) return new Date(value);
       return value;
     }),
+  retry: { limit: 0 },
+  credentials: "same-origin",
 });
 
 export default kyInstance;

@@ -1,7 +1,7 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, getUserDataSelect, PostsPage } from "@/lib/types";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,10 +10,10 @@ export async function GET(req: NextRequest) {
     const type = req.nextUrl.searchParams.get("type") || "posts";
 
     const { user } = await validateRequest();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     if (!q) {
-      return Response.json({ posts: [], users: [], nextCursor: null });
+      return NextResponse.json({ posts: [], users: [], nextCursor: null });
     }
 
     if (type === "users") {
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     return handlePostSearch(q, user.id, cursor);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -52,9 +52,9 @@ async function handlePostSearch(q: string, userId: string, cursor?: string) {
   }
   const pageIds = ids.slice(0, pageSize);
 
-  if (!pageIds.length) {
-    return Response.json({ posts: [], nextCursor: nextCursor } satisfies PostsPage);
-  }
+    if (!pageIds.length) {
+      return NextResponse.json({ posts: [], nextCursor: nextCursor } satisfies PostsPage);
+    }
 
   const posts = await prisma.post.findMany({
     where: { id: { in: pageIds } },
@@ -75,7 +75,7 @@ async function handlePostSearch(q: string, userId: string, cursor?: string) {
     const membership = await prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
-          groupId: post.groupId,
+          groupId: post.groupId!,
           userId,
         },
       },
@@ -86,7 +86,7 @@ async function handlePostSearch(q: string, userId: string, cursor?: string) {
     }
   }
 
-  return Response.json({ posts: filteredPosts, nextCursor: null } satisfies PostsPage);
+  return NextResponse.json({ posts: filteredPosts, nextCursor: null } satisfies PostsPage);
 }
 
 // --- User search ---
@@ -116,7 +116,7 @@ async function handleUserSearch(q: string, loggedInUserId: string, cursor?: stri
   const pageIds = ids.slice(0, pageSize);
 
   if (!pageIds.length) {
-    return Response.json({ users: [], nextCursor: nextCursor });
+    return NextResponse.json({ users: [], nextCursor: nextCursor });
   }
 
   const users = await prisma.user.findMany({
@@ -129,5 +129,5 @@ async function handleUserSearch(q: string, loggedInUserId: string, cursor?: stri
     .map((id) => users.find((u) => u.id === id))
     .filter(Boolean);
 
-  return Response.json({ users: sorted, nextCursor });
+  return NextResponse.json({ users: sorted, nextCursor });
 }

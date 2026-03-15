@@ -62,6 +62,13 @@ export function useSubmitPostMutation() {
       toast({
         description: "Post created",
       });
+      // mark quest progress for create post
+      try {
+        await fetch('/api/quests/progress', { method: 'POST', body: JSON.stringify({ activityType: 'CREATE_POST' }), headers: { 'Content-Type': 'application/json' } });
+        queryClient.setQueryData(['daily-quests'], (old: any) =>
+          old?.map((q: any) => (q.activityType === 'CREATE_POST' ? { ...q, completed: true } : q)),
+        );
+      } catch {}
     },
     onError(error) {
       console.error(error);

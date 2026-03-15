@@ -1,5 +1,12 @@
 import prisma from "./prisma";
 
+const DEFAULT_REWARDS: Record<string, number> = {
+  DAILY_CHECKIN: 20,
+  CREATE_POST: 10,
+  LIKE_POST: 10,
+  COMMENT_POST: 10,
+};
+
 export async function recordActivity(userId: string, activityType: "DAILY_CHECKIN" | "CREATE_POST" | "LIKE_POST" | "COMMENT_POST") {
   // Get today's date at midnight for uniqueness check
   const today = new Date();
@@ -22,15 +29,9 @@ export async function recordActivity(userId: string, activityType: "DAILY_CHECKI
       return null;
     }
 
-    // Get reward value for this activity
-    const reward = await prisma.activityReward.findUnique({
-      where: { activityType },
-    });
-
-    if (!reward) {
-      console.warn(`No reward configured for activity: ${activityType}`);
-      return null;
-    }
+    // Get reward value for this activity (fall back to DEFAULT_REWARDS)
+    const reward = await prisma.activityReward.findUnique({ where: { activityType } });
+    const spointReward = reward?.spointReward ?? DEFAULT_REWARDS[activityType] ?? 0;
 
     // Record the activity
     const activity = await prisma.userActivity.create({
@@ -50,7 +51,7 @@ export async function recordActivity(userId: string, activityType: "DAILY_CHECKI
       balance = await prisma.userBalance.create({
         data: {
           userId,
-          pointsBalance: reward.spointReward,
+          pointsBalance: spointReward,
         },
       });
     } else {
@@ -58,7 +59,7 @@ export async function recordActivity(userId: string, activityType: "DAILY_CHECKI
         where: { userId },
         data: {
           pointsBalance: {
-            increment: reward.spointReward,
+            increment: spointReward,
           },
         },
       });
@@ -66,7 +67,7 @@ export async function recordActivity(userId: string, activityType: "DAILY_CHECKI
 
     return {
       activity,
-      earnedPoints: reward.spointReward,
+      earnedPoints: spointReward,
       newBalance: balance.pointsBalance,
     };
   } catch (error) {

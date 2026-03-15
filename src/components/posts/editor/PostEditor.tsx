@@ -132,8 +132,8 @@ export default function PostEditor() {
       )}
 
       {/* Khu vực nhập liệu (Avatar + Khung Text) */}
-      <div className="flex gap-5">
-      <UserAvatar avatarUrl={user.avatarUrl} className="hidden sm:inline" />
+      <div className="flex gap-5 items-start">
+      <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" size={56} frame={user.avatarFrame} />
         <div {...rootProps} className="w-full">
           <EditorContent
             editor={editor}

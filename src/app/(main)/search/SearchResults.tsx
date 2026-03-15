@@ -238,11 +238,11 @@ function UserCard({ user }: { user: UserData }) {
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl p-3 hover:bg-accent/50 transition-colors">
-      <Link
+        <Link
         href={`/users/${user.username}`}
         className="flex items-center gap-3 min-w-0"
       >
-        <UserAvatar avatarUrl={user.avatarUrl} size={44} />
+        <UserAvatar avatarUrl={user.avatarUrl} size={44} frame={user.avatarFrame} />
         <div className="min-w-0">
           <p className="font-semibold truncate">{user.displayName}</p>
           <p className="text-sm text-muted-foreground truncate">@{user.username}</p>

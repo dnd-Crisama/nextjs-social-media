@@ -18,69 +18,55 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Frame ID required" }, { status: 400 });
     }
 
-    // Get frame
-    const frame = await prisma.frame.findUnique({
-      where: { id: frameId },
-    });
+    const frame = await prisma.frame.findUnique({ where: { id: frameId } });
 
     if (!frame) {
       return Response.json({ error: "Frame not found" }, { status: 404 });
     }
 
-    // Check if cost is in SPoints
-    if (frame.spointCost <= 0) {
+    // Frame chỉ mua bằng tiền thật — chưa hỗ trợ
+    if (frame.price > 0 && frame.spointCost === 0) {
       return Response.json(
-        { error: "This frame cannot be claimed with SPoints" },
-        { status: 400 }
+        { error: "This frame requires a money purchase" },
+        { status: 400 },
       );
     }
 
-    // Check if user already owns frame
+    // Kiểm tra ownership trước khi deduct
     const existingOwnership = await prisma.frameOwnership.findUnique({
-      where: {
-        userId_frameId: {
-          userId: user.id,
-          frameId,
-        },
-      },
+      where: { userId_frameId: { userId: user.id, frameId } },
     });
 
     if (existingOwnership) {
       return Response.json(
         { error: "You already own this frame" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Check balance
-    const balance = await getUserBalance(user.id);
-    if (balance.pointsBalance < frame.spointCost) {
-      return Response.json(
-        { error: "Insufficient SPoints" },
-        { status: 400 }
-      );
+    // Chỉ deduct 1 lần duy nhất ở đây
+    if (frame.spointCost > 0) {
+      const balance = await getUserBalance(user.id);
+      if (balance.pointsBalance < frame.spointCost) {
+        return Response.json(
+          { error: "Insufficient SPoints" },
+          { status: 400 },
+        );
+      }
+      await deductBalance(user.id, frame.spointCost);
     }
 
-    // Deduct balance and create ownership
-    const [newBalance, ownership] = await Promise.all([
-      deductBalance(user.id, frame.spointCost),
-      prisma.frameOwnership.create({
-        data: {
-          userId: user.id,
-          frameId,
-        },
-        include: {
-          frame: true,
-        },
-      }),
-    ]);
+    // Tạo ownership sau khi đã deduct thành công
+    const ownership = await prisma.frameOwnership.create({
+      data: { userId: user.id, frameId },
+      include: { frame: true },
+    });
+
+    const newBalance = await getUserBalance(user.id);
 
     return Response.json(
-      {
-        ownership,
-        newBalance: newBalance.pointsBalance,
-      },
-      { status: 201 }
+      { ownership, newBalance: newBalance.pointsBalance },
+      { status: 201 },
     );
   } catch (error) {
     console.error(error);

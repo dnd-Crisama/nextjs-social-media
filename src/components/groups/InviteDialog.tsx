@@ -21,6 +21,7 @@ interface User {
   username: string;
   displayName: string;
   avatarUrl?: string;
+  avatarFrame?: { id: string; name: string; imageUrl: string } | null;
 }
 
 interface InviteDialogProps {
@@ -122,7 +123,7 @@ export default function InviteDialog({
                   className="flex items-center justify-between gap-3 rounded-lg border border-border p-3 hover:bg-accent/50"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <UserAvatar avatarUrl={user.avatarUrl} size={40} />
+                    <UserAvatar avatarUrl={user.avatarUrl} size={40} frame={user.avatarFrame as any} />
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-sm truncate">
                         {user.displayName}

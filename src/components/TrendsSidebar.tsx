@@ -9,14 +9,22 @@ import { Suspense } from "react";
 import FollowButton from "./FollowButton";
 import UserAvatar from "./UserAvatar";
 import UserTooltip from "./UserTooltip";
+import DailyQuests from "./DailyQuests";
 
 export default function TrendsSidebar() {
   return (
-    <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none space-y-5 md:block lg:w-80">
-      <Suspense fallback={<Loader2 className="mx-auto animate-spin" />}>
-        <WhoToFollow />
-        <TrendingTopics />
-      </Suspense>
+    <div className="sticky top-[5.25rem] hidden h-fit w-72 flex-none md:block lg:w-80">
+      {/* max-h = viewport - navbar height - page padding. overflow-y-auto makes it scrollable */}
+      <div
+        className="flex max-h-[calc(100vh-5.25rem-2.5rem)] flex-col gap-5 overflow-y-auto pb-5 pr-1"
+        style={{ scrollbarWidth: "none" }}
+      >
+        <Suspense fallback={<Loader2 className="mx-auto animate-spin" />}>
+          <WhoToFollow />
+          <DailyQuests />
+          <TrendingTopics />
+        </Suspense>
+      </div>
     </div>
   );
 }
@@ -51,7 +59,7 @@ async function WhoToFollow() {
               href={`/users/${user.username}`}
               className="flex items-center gap-3"
             >
-              <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" />
+              <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" frame={user.avatarFrame} />
               <div>
                 <p className="line-clamp-1 break-all font-semibold hover:underline">
                   {user.displayName}

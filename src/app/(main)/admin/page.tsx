@@ -23,7 +23,7 @@ export default function AdminPage() {
       <Tabs defaultValue="frames" className="w-full">
         <TabsList>
           <TabsTrigger value="frames">Frame Management</TabsTrigger>
-          <TabsTrigger value="activities" disabled>Activity Rewards</TabsTrigger>
+          <TabsTrigger value="activities" disabled>Chotto matte...</TabsTrigger>
         </TabsList>
 
         <TabsContent value="frames">

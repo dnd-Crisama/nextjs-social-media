@@ -28,7 +28,7 @@ export default function GroupHeader({ group }: GroupHeaderProps) {
       <div className="space-y-3 p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-end gap-3">
-            <UserAvatar avatarUrl={group.avatarUrl} className="h-16 w-16" />
+            <UserAvatar avatarUrl={group.avatarUrl} className="flex-none" size={128}/>
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-foreground">
                 {group.name}

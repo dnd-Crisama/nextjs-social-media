@@ -59,6 +59,12 @@ export function useSubmitCommentMutation(postId: string) {
       });
 
       toast({ description: "Comment posted" });
+      try {
+        await fetch('/api/quests/progress', { method: 'POST', body: JSON.stringify({ activityType: 'COMMENT_POST' }), headers: { 'Content-Type': 'application/json' } });
+        queryClient.setQueryData(['daily-quests'], (old: any) =>
+          old?.map((q: any) => (q.activityType === 'COMMENT_POST' ? { ...q, completed: true } : q)),
+        );
+      } catch {}
     },
     onError(error) {
       console.error(error);

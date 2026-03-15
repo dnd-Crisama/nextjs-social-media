@@ -100,3 +100,27 @@
 .str-chat__channel-search-bar-button--exit-search {
   display: none;
 }
+
+/* Remove browser focus ring on avatar button — frame image provides the visual boundary */
+button:has(> .user-avatar-wrapper) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+ 
+.user-avatar-btn {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+.user-avatar-btn:focus,
+.user-avatar-btn:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  ring: 0 !important;
+}
+ 
+/* Shimmer animation for quest progress bar */
+/* @keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+} */

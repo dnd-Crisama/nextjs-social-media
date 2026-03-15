@@ -60,11 +60,11 @@ export default function GroupMemberList({ group }: GroupMemberListProps) {
               key={member.userId}
               className="flex items-center justify-between rounded-lg border border-border p-3"
             >
-              <Link
-                href={`/users/${member.user.username}`}
-                className="flex flex-1 items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
-              >
-                <UserAvatar avatarUrl={member.user.avatarUrl} />
+                <Link
+                  href={`/users/${member.user.username}`}
+                  className="flex flex-1 items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
+                >
+                <UserAvatar avatarUrl={member.user.avatarUrl} frame={member.user.avatarFrame} />
                 <div className="min-w-0">
                   <div className="font-medium truncate">
                     {member.user.displayName}
@@ -114,11 +114,11 @@ export default function GroupMemberList({ group }: GroupMemberListProps) {
                 key={member.userId}
                 className="flex items-center justify-between rounded-lg border border-border p-3"
               >
-                <Link
-                  href={`/users/${member.user.username}`}
-                  className="flex flex-1 items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
-                >
-                  <UserAvatar avatarUrl={member.user.avatarUrl} />
+                  <Link
+                    href={`/users/${member.user.username}`}
+                    className="flex flex-1 items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
+                  >
+                    <UserAvatar avatarUrl={member.user.avatarUrl} frame={member.user.avatarFrame} />
                   <div className="min-w-0">
                     <div className="font-medium truncate">
                       {member.user.displayName}

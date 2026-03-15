@@ -87,30 +87,47 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
   };
 
   return (
-    <div className="w-full rounded-2xl bg-card shadow-sm mb-5">
-      {/* Cover Image */}
-      <div className="relative h-48 sm:h-56 rounded-t-2xl overflow-hidden">
-        {user.coverImageUrl ? (
+    <div className="relative w-full mb-5">
+      {/* Banner frame — bao quanh toàn bộ profile card */}
+      {user.bannerFrame && (
+        <div
+          className="pointer-events-none absolute z-10 rounded-2xl"
+          style={{ inset: "-10px" }}
+        >
           <img
-            src={user.coverImageUrl}
-            alt="Cover"
-            className="absolute inset-0 w-full h-full object-cover"
+            src={user.bannerFrame.imageUrl}
+            alt={user.bannerFrame.name}
+            className="h-full w-full object-fill rounded-2xl"
+            style={{ filter: "drop-shadow(0 0 8px rgba(0,0,0,0.4))" }}
           />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/15 to-secondary/60" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
-      </div>
+        </div>
+      )}
+
+      <div className="w-full rounded-2xl bg-card shadow-sm">
+        {/* Cover Image */}
+        <div className="relative h-48 sm:h-56 rounded-t-2xl overflow-hidden">
+          {user.coverImageUrl ? (
+            <img
+              src={user.coverImageUrl}
+              alt="Cover"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/15 to-secondary/60" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+        </div>
 
       {/* Profile Content */}
       <div className="px-5 pb-5">
         {/* Avatar + Action buttons row */}
         <div className="flex items-end justify-between -mt-12 mb-3 relative z-10">
-          <div className="ring-4 ring-card rounded-full shadow-md">
+          <div className="shadow-md">
             <UserAvatar
               avatarUrl={user.avatarUrl}
               size={96}
               className="size-24 rounded-full"
+              frame={user.avatarFrame}
             />
           </div>
           <div className="mt-14">
@@ -164,6 +181,7 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
           {user.displayName}&apos;s posts
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

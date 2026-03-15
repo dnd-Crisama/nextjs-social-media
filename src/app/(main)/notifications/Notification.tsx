@@ -97,7 +97,7 @@ export default function Notification({ notification }: NotificationProps) {
 
         <div className="min-w-0 flex-1 space-y-2.5">
           <div className="flex items-center gap-2.5">
-            <UserAvatar avatarUrl={notification.issuer.avatarUrl} size={40} />
+            <UserAvatar avatarUrl={notification.issuer.avatarUrl} size={40} frame={(notification.issuer as any).avatarFrame} />
             <p className="text-sm leading-snug">
               <span className="font-bold text-foreground">
                 {notification.issuer.displayName}

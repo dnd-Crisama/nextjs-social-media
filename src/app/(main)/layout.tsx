@@ -1,4 +1,5 @@
 import { validateRequest } from "@/auth";
+import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import MenuBar from "./MenuBar";
 import Navbar from "./Navbar";
@@ -14,8 +15,29 @@ export default async function Layout({
 
   if (!session.user) redirect("/login");
 
+  // Fetch full user record (including avatar/banner frames) to ensure client
+  // components receive frame data via SessionProvider.
+  const fullUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+      avatarFrame: {
+        select: { id: true, name: true, imageUrl: true },
+      },
+      bannerFrame: {
+        select: { id: true, name: true, imageUrl: true },
+      },
+      role: true,
+    },
+  });
+
+  const sessionWithFullUser = { ...session, user: fullUser } as any;
+
   return (
-    <SessionProvider value={session}>
+    <SessionProvider value={sessionWithFullUser}>
       <div className="flex min-h-screen flex-col">
         <Navbar />
         <div className="mx-auto flex w-full max-w-7xl grow gap-5 p-5">
@@ -27,7 +49,6 @@ export default async function Layout({
           </div>
           {children}
         </div>
-        <MenuBar className="sticky bottom-0 flex w-full justify-center gap-5 border-t bg-card p-3 sm:hidden" />
       </div>
     </SessionProvider>
   );

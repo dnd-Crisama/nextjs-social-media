@@ -56,6 +56,19 @@ export default function LikeButton({ postId, initialState }: LikeButtonProps) {
         description: "Something went wrong. Please try again.",
       });
     },
+    onSuccess: async () => {
+      // If user just liked the post, mark quest progress
+      const current = queryClient.getQueryData<LikeInfo>(queryKey);
+      if (current?.isLikedByUser) {
+        try {
+          await kyInstance.post('/api/quests/progress', { json: { activityType: 'LIKE_POST' } });
+          // update daily-quests cache: mark LIKE_POST completed
+          queryClient.setQueryData(['daily-quests'], (old: any) =>
+            old?.map((q: any) => (q.activityType === 'LIKE_POST' ? { ...q, completed: true } : q)),
+          );
+        } catch (e) {}
+      }
+    },
   });
 
   return (

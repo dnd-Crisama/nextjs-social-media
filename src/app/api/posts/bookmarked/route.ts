@@ -1,7 +1,7 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude, PostsPage } from "@/lib/types";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const { user } = await validateRequest();
 
     if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const bookmarks = await prisma.bookmark.findMany({
@@ -44,13 +44,13 @@ export async function GET(req: NextRequest) {
 
       // For group posts, check if user is an APPROVED member
       const membership = await prisma.groupMember.findUnique({
-        where: {
-          groupId_userId: {
-            groupId: post.groupId,
-            userId: user.id,
-          },
+      where: {
+        groupId_userId: {
+          groupId: post.groupId!,
+          userId: user.id,
         },
-      });
+      },
+    });
 
       if (membership && membership.status === "APPROVED") {
         filteredBookmarks.push(bookmark);
@@ -70,9 +70,9 @@ export async function GET(req: NextRequest) {
       nextCursor: nextCursor,
     };
 
-    return Response.json(data);
+    return NextResponse.json(data);
   } catch (error) {
     console.error(error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

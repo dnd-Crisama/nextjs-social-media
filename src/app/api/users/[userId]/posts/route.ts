@@ -5,11 +5,17 @@ import { NextRequest } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params: { userId } }: { params: { userId: string } },
+  context: { params: Promise<{ userId: string }> | { userId: string } },
 ) {
   try {
-    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
+    // Next.js 15: params có thể là Promise — await để an toàn
+    const { userId } = await Promise.resolve(context.params);
 
+    if (!userId) {
+      return Response.json({ error: "Missing userId" }, { status: 400 });
+    }
+
+    const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
     const pageSize = 10;
 
     const { user } = await validateRequest();
@@ -18,8 +24,38 @@ export async function GET(
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const [memberRows, createdGroups] = await Promise.all([
+      prisma.groupMember.findMany({
+        where: { userId: user.id, status: "APPROVED" },
+        select: { groupId: true },
+      }),
+      prisma.group.findMany({
+        where: { userId: user.id },
+        select: { id: true },
+      }),
+    ]);
+
+    const accessibleGroupIds = [
+      ...new Set([
+        ...memberRows.map((r) => r.groupId),
+        ...createdGroups.map((g) => g.id),
+      ]),
+    ];
+
     const posts = await prisma.post.findMany({
-      where: { userId },
+      where: {
+        userId,
+        OR: [
+          { groupId: null },
+          { group: { isPublic: true } },
+          ...(accessibleGroupIds.length > 0
+            ? [{
+                groupId: { in: accessibleGroupIds },
+                group: { isPublic: false },
+              }]
+            : []),
+        ],
+      },
       include: getPostDataInclude(user.id),
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,

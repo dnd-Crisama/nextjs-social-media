@@ -122,14 +122,12 @@ async function UserProfile({ user, loggedInUserId }: UserProfileProps) {
       <div className="px-5 pb-5">
         {/* Avatar + Action buttons row */}
         <div className="flex items-end justify-between -mt-12 mb-3 relative z-10">
-          <div className="shadow-md">
             <UserAvatar
               avatarUrl={user.avatarUrl}
               size={96}
               className="size-24 rounded-full"
               frame={user.avatarFrame}
-            />
-          </div>
+            />     
           <div className="mt-14">
             {user.id === loggedInUserId ? (
               <EditProfileButton user={user} />

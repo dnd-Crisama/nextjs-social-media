@@ -1,3 +1,5 @@
+"use client";
+
 import avatarPlaceholder from "@/assets/avatar-placeholder.png";
 import CropImageDialog from "@/components/CropImageDialog";
 import LoadingButton from "@/components/LoadingButton";
@@ -31,10 +33,12 @@ import { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Resizer from "react-image-file-resizer";
 import { useUpdateProfileMutation } from "./mutations";
+import { cn } from "@/lib/utils";
 
 interface FrameData {
   id: string;
   name: string;
+  imageUrl: string;
   type: string;
 }
 
@@ -43,6 +47,189 @@ interface EditProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+// ─── Frame Picker (Discord-style grid) ───────────────────────────────────────
+
+interface FramePickerProps {
+  frames: FrameData[];
+  selectedId: string | null | undefined;
+  onSelect: (id: string | null) => void;
+  previewAvatarSrc?: string | StaticImageData;
+  previewBannerSrc?: string | null;
+  previewDisplayName?: string;
+  type: "AVATAR" | "PROFILE";
+}
+
+function FramePicker({
+  frames,
+  selectedId,
+  onSelect,
+  previewAvatarSrc,
+  previewBannerSrc,
+  previewDisplayName,
+  type,
+}: FramePickerProps) {
+  const filtered = frames.filter((f) => f.type === type);
+  const selectedFrame = filtered.find((f) => f.id === selectedId) ?? null;
+
+  // ── Grid (shared for both types) ──────────────────────────────
+  const grid = (
+    <div className="grid grid-cols-4 gap-2">
+      {/* None tile */}
+      <button
+        type="button"
+        onClick={() => onSelect(null)}
+        className={cn(
+          "relative aspect-square rounded-lg border-2 flex items-center justify-center transition-all duration-150",
+          !selectedId
+            ? "border-primary bg-primary/10 shadow-sm"
+            : "border-border bg-muted/40 hover:border-muted-foreground/40 hover:bg-muted/70",
+        )}
+      >
+        <div className="flex flex-col items-center gap-1">
+          <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center">
+            <X className="w-3 h-3 text-muted-foreground/60" />
+          </div>
+          <span className="text-[10px] text-muted-foreground leading-none">None</span>
+        </div>
+      </button>
+
+      {filtered.map((frame) => (
+        <button
+          key={frame.id}
+          type="button"
+          onClick={() => onSelect(frame.id)}
+          className={cn(
+            "relative aspect-square rounded-lg border-2 overflow-hidden transition-all duration-150 group",
+            selectedId === frame.id
+              ? "border-primary shadow-md shadow-primary/20"
+              : "border-border hover:border-muted-foreground/50",
+          )}
+          title={frame.name}
+        >
+          <img src={frame.imageUrl} alt={frame.name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+          {selectedId === frame.id && (
+            <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center shadow">
+              <svg className="w-2.5 h-2.5 text-primary-foreground" viewBox="0 0 10 10" fill="none">
+                <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (type === "AVATAR") {
+    return (
+      <div className="flex gap-4">
+        {/* Grid */}
+        <div className="flex-1 min-w-0">
+          {grid}
+          {filtered.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">
+              No frames owned yet. Visit the shop!
+            </p>
+          )}
+        </div>
+
+        {/* Avatar preview */}
+        <div className="flex flex-col items-center gap-2 shrink-0">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Preview</span>
+          <div className="relative w-16 h-16">
+            <Image
+              src={previewAvatarSrc || avatarPlaceholder}
+              alt="Preview"
+              width={64}
+              height={64}
+              className="w-full h-full object-cover rounded-full"
+            />
+            {selectedFrame && (
+              <img
+                src={selectedFrame.imageUrl}
+                alt={selectedFrame.name}
+                className="absolute -inset-0.5 w-[calc(100%+4px)] h-[calc(100%+4px)] object-contain pointer-events-none z-10 scale-125"
+              />
+            )}
+            <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-background z-20" />
+          </div>
+          <span className="text-[10px] text-muted-foreground">
+            {selectedFrame ? selectedFrame.name : "No frame"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── PROFILE type: full mini profile card preview ───────────────
+  return (
+    <div className="space-y-3">
+      {/* Grid */}
+      <div>
+        {grid}
+        {filtered.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-4">
+            No profile effects owned yet. Visit the shop!
+          </p>
+        )}
+      </div>
+
+      {/* Mini profile card preview */}
+      <div>
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium block mb-2">
+          Preview
+        </span>
+        <div className="w-56 rounded-xl overflow-hidden border border-border shadow-lg bg-card">
+          {/* Banner area */}
+          <div className="relative h-16">
+            {previewBannerSrc ? (
+              <img src={previewBannerSrc} alt="Banner" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/10 to-muted" />
+            )}
+            {/* Profile effect overlay on banner */}
+            {selectedFrame && (
+              <img
+                src={selectedFrame.imageUrl}
+                alt={selectedFrame.name}
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
+              />
+            )}
+          </div>
+
+          {/* Avatar (overlapping banner) */}
+          <div className="px-3 pb-3">
+            <div className="relative -mt-6 mb-2 w-12 h-12">
+              <Image
+                src={previewAvatarSrc || avatarPlaceholder}
+                alt="Avatar"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover rounded-full border-[3px] border-card"
+              />
+              {/* Online dot */}
+              <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card z-20" />
+            </div>
+
+            {/* Name */}
+            <p className="text-sm font-semibold leading-tight truncate">
+              {previewDisplayName || "Display Name"}
+            </p>
+          </div>
+        </div>
+
+        {selectedFrame && (
+          <p className="text-[10px] text-muted-foreground mt-1.5">
+            {selectedFrame.name}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Dialog ──────────────────────────────────────────────────────────────
 
 export default function EditProfileDialog({
   user,
@@ -66,42 +253,33 @@ export default function EditProfileDialog({
   const [ownedFrames, setOwnedFrames] = useState<FrameData[]>([]);
   const [loadingFrames, setLoadingFrames] = useState(true);
 
+  const avatarPreviewSrc = croppedAvatar
+    ? URL.createObjectURL(croppedAvatar)
+    : user.avatarUrl || avatarPlaceholder;
+
+  const bannerPreviewSrc = croppedCover
+    ? URL.createObjectURL(croppedCover)
+    : user.coverImageUrl || null;
+
   useEffect(() => {
     if (!open) return;
-
-    const fetchOwnedFrames = async () => {
-      try {
-        const res = await fetch("/api/user-frames");
-        if (res.ok) {
-          const frames = await res.json();
-          setOwnedFrames(frames);
-        }
-      } catch (error) {
-        console.error("Failed to fetch owned frames:", error);
-      } finally {
-        setLoadingFrames(false);
-      }
-    };
-
     setLoadingFrames(true);
-    fetchOwnedFrames();
+    fetch("/api/user-frames")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setOwnedFrames)
+      .catch(() => setOwnedFrames([]))
+      .finally(() => setLoadingFrames(false));
   }, [open]);
 
   async function onSubmit(values: UpdateUserProfileValues) {
     const newAvatarFile = croppedAvatar
       ? new File([croppedAvatar], `avatar_${user.id}.webp`)
       : undefined;
-
     const newCoverFile = croppedCover
       ? new File([croppedCover], `cover_${user.id}.webp`)
       : undefined;
-
     mutation.mutate(
-      {
-        values,
-        avatar: newAvatarFile,
-        cover: newCoverFile,
-      },
+      { values, avatar: newAvatarFile, cover: newCoverFile },
       {
         onSuccess: () => {
           setCroppedAvatar(null);
@@ -114,134 +292,127 @@ export default function EditProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-2">
+      <DialogContent className="max-w-lg p-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <DialogHeader className="px-5 pt-5 pb-2 shrink-0">
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
 
-        {/* Cover image preview in dialog */}
-        <div className="px-5">
-          <Label className="mb-1.5 block text-sm">Cover Image</Label>
-          <CoverInput
-            src={
-              croppedCover
-                ? URL.createObjectURL(croppedCover)
-                : user.coverImageUrl || null
-            }
-            onImageCropped={setCroppedCover}
-          />
+        <div className="overflow-y-auto flex-1 px-5 pb-2 space-y-4">
+          {/* Cover image */}
+          <div>
+            <Label className="mb-1.5 block text-sm">Cover Image</Label>
+            <CoverInput src={bannerPreviewSrc} onImageCropped={setCroppedCover} />
+          </div>
+
+          {/* Avatar */}
+          <div>
+            <Label className="mb-1.5 block text-sm">Avatar</Label>
+            <AvatarInput src={avatarPreviewSrc} onImageCropped={setCroppedAvatar} />
+          </div>
+
+          <Form {...form}>
+            <form
+              id="edit-profile-form"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4 pb-4"
+            >
+              <FormField
+                control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell us about yourself..."
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Avatar Frame Picker */}
+              <FormField
+                control={form.control}
+                name="avatarFrameId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avatar Decoration</FormLabel>
+                    {loadingFrames ? (
+                      <div className="h-20 flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : (
+                      <FramePicker
+                        frames={ownedFrames}
+                        selectedId={field.value}
+                        onSelect={(id) => field.onChange(id)}
+                        previewAvatarSrc={avatarPreviewSrc}
+                        type="AVATAR"
+                      />
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Banner Frame Picker */}
+              <FormField
+                control={form.control}
+                name="bannerFrameId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profile Effect</FormLabel>
+                    {loadingFrames ? (
+                      <div className="h-20 flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : (
+                      <FramePicker
+                        frames={ownedFrames}
+                        selectedId={field.value}
+                        onSelect={(id) => field.onChange(id)}
+                        previewAvatarSrc={avatarPreviewSrc}
+                        previewBannerSrc={bannerPreviewSrc}
+                        previewDisplayName={form.watch("displayName") || user.displayName}
+                        type="PROFILE"
+                      />
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
         </div>
 
-        <div className="px-5">
-          <Label className="mb-1.5 block text-sm">Avatar</Label>
-          <AvatarInput
-            src={
-              croppedAvatar
-                ? URL.createObjectURL(croppedAvatar)
-                : user.avatarUrl || avatarPlaceholder
-            }
-            onImageCropped={setCroppedAvatar}
-          />
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 px-5 pb-5">
-            <FormField
-              control={form.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Display Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bio</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Tell us about yourself..."
-                      className="resize-none"
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="avatarFrameId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Avatar Frame</FormLabel>
-                  <FormControl>
-                    <select
-                      value={field.value || ""}
-                      onChange={(e) =>
-                        field.onChange(e.target.value === "" ? null : e.target.value)
-                      }
-                      disabled={loadingFrames}
-                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">No frame</option>
-                      {ownedFrames
-                        .filter((f) => f.type === "AVATAR")
-                        .map((frame) => (
-                          <option key={frame.id} value={frame.id}>
-                            {frame.name}
-                          </option>
-                        ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="bannerFrameId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Banner Frame</FormLabel>
-                  <FormControl>
-                    <select
-                      value={field.value || ""}
-                      onChange={(e) =>
-                        field.onChange(e.target.value === "" ? null : e.target.value)
-                      }
-                      disabled={loadingFrames}
-                      className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">No frame</option>
-                      {ownedFrames
-                        .filter((f) => f.type === "PROFILE")
-                        .map((frame) => (
-                          <option key={frame.id} value={frame.id}>
-                            {frame.name}
-                          </option>
-                        ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <LoadingButton type="submit" loading={mutation.isPending}>
-                Save changes
-              </LoadingButton>
-            </DialogFooter>
-          </form>
-        </Form>
+        <DialogFooter className="px-5 py-4 border-t shrink-0">
+          <LoadingButton
+            type="submit"
+            form="edit-profile-form"
+            loading={mutation.isPending}
+          >
+            Save changes
+          </LoadingButton>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -261,12 +432,7 @@ function CoverInput({ src, onImageCropped }: CoverInputProps) {
   function onImageSelected(image: File | undefined) {
     if (!image) return;
     Resizer.imageFileResizer(
-      image,
-      1500,
-      500,
-      "WEBP",
-      90,
-      0,
+      image, 1500, 500, "WEBP", 90, 0,
       (uri) => setImageToCrop(uri as File),
       "file",
     );
@@ -287,11 +453,7 @@ function CoverInput({ src, onImageCropped }: CoverInputProps) {
         className="group relative block w-full h-28 rounded-xl overflow-hidden bg-secondary hover:opacity-90 transition-opacity"
       >
         {src ? (
-          <img
-            src={src}
-            alt="Cover preview"
-            className="w-full h-full object-cover"
-          />
+          <img src={src} alt="Cover preview" className="w-full h-full object-cover" />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full gap-1.5 text-muted-foreground">
             <ImageIcon className="size-6" />
@@ -318,9 +480,7 @@ function CoverInput({ src, onImageCropped }: CoverInputProps) {
           onCropped={onImageCropped}
           onClose={() => {
             setImageToCrop(undefined);
-            if (fileInputRef.current) {
-              fileInputRef.current.value = "";
-            }
+            if (fileInputRef.current) fileInputRef.current.value = "";
           }}
         />
       )}
@@ -342,12 +502,7 @@ function AvatarInput({ src, onImageCropped }: AvatarInputProps) {
   function onImageSelected(image: File | undefined) {
     if (!image) return;
     Resizer.imageFileResizer(
-      image,
-      1024,
-      1024,
-      "WEBP",
-      100,
-      0,
+      image, 1024, 1024, "WEBP", 100, 0,
       (uri) => setImageToCrop(uri as File),
       "file",
     );
@@ -385,9 +540,7 @@ function AvatarInput({ src, onImageCropped }: AvatarInputProps) {
           onCropped={onImageCropped}
           onClose={() => {
             setImageToCrop(undefined);
-            if (fileInputRef.current) {
-              fileInputRef.current.value = "";
-            }
+            if (fileInputRef.current) fileInputRef.current.value = "";
           }}
         />
       )}

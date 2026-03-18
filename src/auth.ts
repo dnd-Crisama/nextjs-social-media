@@ -24,6 +24,9 @@ export const lucia = new Lucia(adapter, {
       role: databaseUserAttributes.role,
       avatarFrame: databaseUserAttributes.avatarFrame,
       bannerFrame: databaseUserAttributes.bannerFrame,
+      // 1. Thêm trường isBanned và bannedUntil để gọi được từ session.user
+      isBanned: databaseUserAttributes.isBanned,
+      bannedUntil: databaseUserAttributes.bannedUntil,
     };
   },
 });
@@ -47,12 +50,14 @@ interface DatabaseUserAttributes {
     name: string;
     imageUrl: string;
   } | null;
-
   bannerFrame: {
     id: string;
     name: string;
     imageUrl: string;
   } | null;
+  // 2. Định nghĩa kiểu dữ liệu cho TypeScript
+  isBanned: boolean;
+  bannedUntil: Date | null;
 }
 
 export const google = new Google(
@@ -77,7 +82,6 @@ export const validateRequest = cache(
     const result = await lucia.validateSession(sessionId);
 
     try {
-        // Nếu thẻ hợp lệ VÀ sắp hết hạn (fresh) -> Gia hạn thêm thời gian
       if (result.session && result.session.fresh) {
         const sessionCookie = lucia.createSessionCookie(result.session.id);
         (await cookies()).set(
@@ -86,7 +90,6 @@ export const validateRequest = cache(
           sessionCookie.attributes,
         );
       }
-      //  Nếu mã thẻ gửi lên bị sai hoặc đã hết hạn -> Xóa cookie cũ trên trình duyệt
       if (!result.session) {
         const sessionCookie = lucia.createBlankSessionCookie();
         (await cookies()).set(

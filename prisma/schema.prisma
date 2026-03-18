@@ -48,6 +48,11 @@ model User {
   balance               UserBalance?
   questProgresses       QuestProgress[]
   questClaims           QuestClaim[]
+  violationCount   Int       @default(0)
+  isBanned         Boolean   @default(false)
+  bannedUntil      DateTime?
+  moderationLogs   CommentModerationLog[] @relation("UserModerationLogs")
+
 
   createdAt DateTime @default(now())
 
@@ -111,20 +116,40 @@ enum MediaType {
 }
 
 model Comment {
-  id       String    @id @default(cuid())
-  content  String
-  userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  postId   String
-  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parentId String?
-  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies  Comment[] @relation("CommentReplies")
+  id        String    @id @default(cuid())
+  content   String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  aiScore   Float?
+  aiFlag    String?  
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@map("comments")
 }
+
+model CommentModerationLog {
+  id          String   @id @default(cuid())
+  commentId   String   
+  userId      String
+  user        User     @relation("UserModerationLogs", fields: [userId], references: [id], onDelete: Cascade)
+  content     String  
+  aiScore     Float
+  aiFlag      String   
+  action      String   
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([aiFlag])
+  @@index([createdAt])
+  @@map("comment_moderation_logs")
+}
+
 
 model Like {
   userId String
@@ -218,6 +243,7 @@ enum NotificationType {
   GROUP_JOIN_REQUEST
   GROUP_JOIN_APPROVED
   GROUP_JOIN_REJECTED
+  MODERATION
 }
 
 enum UserRole {
@@ -323,3 +349,4 @@ model UserBalance {
   @@index([userId])
   @@map("user_balances")
 }
+

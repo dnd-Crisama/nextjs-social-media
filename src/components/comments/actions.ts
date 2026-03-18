@@ -4,6 +4,7 @@ import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getCommentDataInclude, PostData } from "@/lib/types";
 import { createCommentSchema } from "@/lib/validation";
+import { moderateComment } from '@/lib/aiModeration';
 
 export async function submitComment({
   post,
@@ -17,8 +18,25 @@ export async function submitComment({
   const { user } = await validateRequest();
   if (!user) throw new Error("Unauthorized");
 
+  // ── 1. Check if user is banned ──
+  const userData = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { isBanned: true, bannedUntil: true }
+  });
+
+  if (userData?.isBanned && userData.bannedUntil && userData.bannedUntil > new Date()) {
+    throw new Error('BANNED:' + userData.bannedUntil.toISOString());
+  } else if (userData?.isBanned && (!userData.bannedUntil || userData.bannedUntil <= new Date())) {
+    // Ban expired — lift it
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { isBanned: false, bannedUntil: null }
+    });
+  }
+
   const { content: contentValidated } = createCommentSchema.parse({ content });
 
+  // ── 2. Create Comment & Notifications ──
   const newComment = await prisma.$transaction(async (tx) => {
     const comment = await tx.comment.create({
       data: {
@@ -82,6 +100,13 @@ export async function submitComment({
 
     return comment;
   });
+
+  // ── 3. AI Moderation (non-blocking) ──
+  // Don't await — fire and forget. If deleted, client receives next poll.
+  moderateComment(newComment.id, user.id, contentValidated).then(({ deleted, banned }) => {
+    if (deleted) console.log(`[moderation] Comment ${newComment.id} auto-deleted`);
+    if (banned) console.log(`[moderation] User ${user.id} banned for 24h`);
+  }).catch(e => console.error('[moderation] error:', e));
 
   return newComment;
 }

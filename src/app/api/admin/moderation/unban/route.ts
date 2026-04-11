@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const { userId } = await req.json();
   await prisma.user.update({
     where: { id: userId },
-    data: { isBanned: false, bannedUntil: null, violationCount: 0 },
+    data: { isBanned: false, banReason: null, bannedUntil: null },
   });
   return NextResponse.json({ success: true });
 }

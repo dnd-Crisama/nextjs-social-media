@@ -9,12 +9,14 @@ type LogUser = {
   username: string;
   displayName: string;
   isBanned: boolean;
-  violationCount: number; // Đã thêm theo schema của bạn
+  violationCount: number;
+  violationTotal: number;
 };
 
 type Log = {
   id: string;
   userId: string;
+  commentId: string;
   content: string;
   aiScore: number;
   aiFlag: string;
@@ -27,6 +29,7 @@ export default function CommentModerationTab() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchLogs = async (flag = "") => {
@@ -64,6 +67,28 @@ export default function CommentModerationTab() {
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    setDeletingCommentId(commentId);
+    try {
+      const res = await fetch('/api/admin/moderation/delete-comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId }),
+      });
+      if (res.ok) {
+        toast({ description: 'Comment đã bị xóa.' });
+        fetchLogs(filter);
+      } else {
+        const data = await res.json();
+        toast({ variant: 'destructive', description: data.error || 'Failed to delete comment.' });
+      }
+    } catch {
+      toast({ variant: 'destructive', description: 'Failed to delete comment.' });
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
   const flagColor = (flag: string) => {
     if (flag === "DELETE") return "text-red-600 font-bold";
     if (flag === "FLAG") return "text-yellow-600 font-semibold";
@@ -71,13 +96,13 @@ export default function CommentModerationTab() {
   };
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="space-y-4">
       <div className="flex gap-2">
         {["", "DELETE", "FLAG", "ALLOW"].map((f) => (
           <Button
             key={f}
             variant={filter === f ? "default" : "outline"}
-            size="sm"
+            size="default"
             onClick={() => setFilter(f)}
           >
             {f || "All Logs"}
@@ -119,15 +144,15 @@ export default function CommentModerationTab() {
                     <div 
                       className={cn(
                         "flex size-7 items-center justify-center rounded-full border font-bold text-xs",
-                        log.user.violationCount >= 3 
+                        log.user.violationTotal >= 3 
                           ? "bg-red-50 text-red-700 border-red-200 shadow-sm" 
-                          : log.user.violationCount > 0 
+                          : log.user.violationTotal > 0 
                             ? "bg-amber-50 text-amber-700 border-amber-200" 
                             : "bg-emerald-50 text-emerald-700 border-emerald-200"
                       )}
-                      title={`${log.user.violationCount} total violations`}
+                      title={`${log.user.violationTotal} total violations`}
                     >
-                      {log.user.violationCount}
+                      {log.user.violationTotal}
                     </div>
                   </td>
 
@@ -146,7 +171,7 @@ export default function CommentModerationTab() {
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                     {new Date(log.createdAt).toLocaleString("vi-VN")}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right space-x-2">
                     {log.user.isBanned && (
                       <Button
                         size="sm"
@@ -157,6 +182,15 @@ export default function CommentModerationTab() {
                         Unban
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-8 text-xs font-semibold"
+                      disabled={deletingCommentId === log.commentId}
+                      onClick={() => handleDeleteComment(log.commentId)}
+                    >
+                      {deletingCommentId === log.commentId ? 'Đang xóa...' : 'Xóa'}
+                    </Button>
                   </td>
                 </tr>
               ))}

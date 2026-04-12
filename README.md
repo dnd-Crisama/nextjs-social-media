@@ -5,7 +5,6 @@
 <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
 <img src="https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white" />
 <img src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
-<img src="https://img.shields.io/badge/Clerk-Auth-6C47FF?style=for-the-badge&logo=clerk&logoColor=white" />
 
 <br/>
 <br/>
@@ -69,7 +68,6 @@
 - **[PostgreSQL](https://www.postgresql.org/)** — Relational database for all persistent data
 
 ### Authentication & Media
-- **[Clerk](https://clerk.com/)** — Full authentication stack (sign-up, sign-in, session management, webhooks)
 - **[Cloudinary](https://cloudinary.com/) / [UploadThing](https://uploadthing.com/)** — Cloud media storage and optimized image delivery
 
 ### Real-Time & AI
@@ -85,7 +83,7 @@
 
 - **Node.js** ≥ 18.x
 - **PostgreSQL** database
-- Accounts on: [Clerk](https://clerk.com), [Cloudinary](https://cloudinary.com) or [UploadThing](https://uploadthing.com), [Stream](https://getstream.io)
+- Accounts on: [Cloudinary](https://cloudinary.com) or [UploadThing](https://uploadthing.com), [Stream](https://getstream.io)
 
 ### Installation
 
@@ -104,25 +102,79 @@ cp .env.example .env.local
 ### Environment Variables
 
 ```env
-# Database
-DATABASE_URL="postgresql://..."
+# =========================
+# Database (Vercel Postgres + Prisma)
+# =========================
+DATABASE_URL="your_database_url"
+POSTGRES_URL="your_postgres_url"
+PRISMA_DATABASE_URL="your_prisma_accelerate_url"
 
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
-CLERK_SECRET_KEY=sk_...
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+# =========================
+# Uploadthing
+# =========================
+UPLOADTHING_SECRET="your_uploadthing_secret"
+NEXT_PUBLIC_UPLOADTHING_APP_ID="your_uploadthing_app_id"
+UPLOADTHING_TOKEN="your_uploadthing_token"
 
-# Cloudinary / UploadThing
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
+# =========================
+# Cron Jobs
+# =========================
+CRON_SECRET="your_cron_secret"
 
-# ChatStreamSDK
-NEXT_PUBLIC_STREAM_API_KEY=...
-STREAM_SECRET_KEY=...
+# =========================
+# Stream (Chat / Video / Activity Feed)
+# =========================
+NEXT_PUBLIC_STREAM_KEY="your_stream_public_key"
+STREAM_SECRET="your_stream_secret"
 
+# =========================
+# Google OAuth
+# =========================
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+
+# =========================
+# App Config
+# =========================
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"# =========================
+# Database (Vercel Postgres + Prisma)
+# =========================
+DATABASE_URL="your_database_url"
+POSTGRES_URL="your_postgres_url"
+PRISMA_DATABASE_URL="your_prisma_accelerate_url"
+
+# =========================
+# Uploadthing
+# =========================
+UPLOADTHING_SECRET="your_uploadthing_secret"
+NEXT_PUBLIC_UPLOADTHING_APP_ID="your_uploadthing_app_id"
+UPLOADTHING_TOKEN="your_uploadthing_token"
+
+# =========================
+# Cron Jobs
+# =========================
+CRON_SECRET="your_cron_secret"
+
+# =========================
+# Stream (Chat / Video / Activity Feed)
+# =========================
+NEXT_PUBLIC_STREAM_KEY="your_stream_public_key"
+STREAM_SECRET="your_stream_secret"
+
+# =========================
+# Google OAuth
+# =========================
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+
+# =========================
+# App Config
+# =========================
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+
+# =========================
 # AI Moderation
+# =========================
 AI_MODERATION_API_KEY=...
 ```
 
@@ -148,7 +200,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - **Server Actions** — Form mutations handled entirely on the server without dedicated API routes, reducing client bundle size
 - **Optimistic UI** — Like and follow interactions update instantly on the client before server confirmation
 - **Streaming & Suspense** — Feed and profile data stream progressively for faster perceived load times
-- **Webhook-driven sync** — Clerk user events (create/update/delete) are synced to PostgreSQL in real time via secure webhooks
 - **AI moderation pipeline** — Comments pass through a language model inference call before persisting; flagged content is held for review without blocking UX
 - **Quest engine** — A cron-reset daily quest system tracks user activity server-side and gates reward claiming behind completion criteria
 

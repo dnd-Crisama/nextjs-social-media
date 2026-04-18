@@ -32,16 +32,29 @@ export async function submitPost(input: {
     }
   }
 
-  const newPost = await prisma.post.create({
-    data: {
-      content,
-      userId: user.id,
-      groupId,
-      attachments: {
-        connect: mediaIds.map((id) => ({ id })),
+  const newPost = await prisma.$transaction(async (tx) => {
+    // Tạo bài viết 
+    const post = await tx.post.create({
+      data: {
+        content,
+        userId: user.id,
+        groupId,
+        attachments: {
+          connect: mediaIds.map((id) => ({ id })),
+        },
       },
-    },
-    include: getPostDataInclude(user.id),
+      include: getPostDataInclude(user.id),
+    });
+
+    // Ghi nhận Create Post Activity 
+    await tx.userActivity.create({
+      data: {
+        userId: user.id,
+        activityType: "CREATE_POST",
+      }
+    });
+
+    return post;
   });
 
   return newPost;

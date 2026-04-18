@@ -48,6 +48,14 @@ export async function submitComment({
       include: getCommentDataInclude(user.id),
     });
 
+    // Ghi nhận Comment Activity
+    await tx.userActivity.create({
+      data: {
+        userId: user.id,
+        activityType: "COMMENT_POST",
+      }
+    });
+
     // --- Notification: COMMENT (chỉ khi comment vào bài người khác, không phải reply) ---
     if (!parentId && post.user.id !== user.id) {
       await tx.notification.create({

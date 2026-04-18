@@ -12,16 +12,11 @@ const DEFAULT_REWARDS: Record<string, number> = {
 
 function labelForActivity(activityType: string) {
   switch (activityType) {
-    case "DAILY_CHECKIN":
-      return "Daily check-in";
-    case "CREATE_POST":
-      return "Create a post";
-    case "LIKE_POST":
-      return "Like a post";
-    case "COMMENT_POST":
-      return "Comment on a post";
-    default:
-      return activityType;
+    case "DAILY_CHECKIN": return "Daily check-in";
+    case "CREATE_POST": return "Create a post";
+    case "LIKE_POST": return "Like a post";
+    case "COMMENT_POST": return "Comment on a post";
+    default: return activityType;
   }
 }
 
@@ -32,34 +27,42 @@ export async function GET() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const activityTypes = ["DAILY_CHECKIN", "LIKE_POST", "COMMENT_POST", "CREATE_POST"];
+  const activityTypes: ActivityType[] = ["DAILY_CHECKIN", "LIKE_POST", "COMMENT_POST", "CREATE_POST"];
 
-  const rewards = await Promise.all(
-    activityTypes.map(async (a) => {
-      const r = await prisma.activityReward.findUnique({ where: { activityType: a as ActivityType } });
-      return r?.spointReward ?? DEFAULT_REWARDS[a];
+  // TỐI ƯU HÓA: Dùng findMany với `in` để gộp tất cả thành 3 queries song song
+  const [rewardsDB, progressesDB, claimsDB] = await Promise.all([
+    prisma.activityReward.findMany({
+      where: { activityType: { in: activityTypes } }
     }),
-  );
-
-  const quests = await Promise.all(
-    activityTypes.map(async (activityType, i) => {
-      const completed = !!(await prisma.questProgress.findFirst({
-        where: { userId: user.id, activityType: activityType as ActivityType, completedAt: { gte: today } },
-      }));
-
-      const claimed = !!(await prisma.questClaim.findFirst({
-        where: { userId: user.id, activityType: activityType as ActivityType, claimedAt: { gte: today } },
-      }));
-
-      return {
-        activityType,
-        label: labelForActivity(activityType),
-        spointReward: rewards[i],
-        completed,
-        claimed,
-      };
+    prisma.questProgress.findMany({
+      where: { 
+        userId: user.id, 
+        activityType: { in: activityTypes }, 
+        completedAt: { gte: today } 
+      }
     }),
-  );
+    prisma.questClaim.findMany({
+      where: { 
+        userId: user.id, 
+        activityType: { in: activityTypes }, 
+        claimedAt: { gte: today } 
+      }
+    })
+  ]);
+
+  // Chuyển array thành Map/Set để truy xuất nhanh O(1)
+  const rewardMap = new Map(rewardsDB.map(r => [r.activityType, r.spointReward]));
+  const progressSet = new Set(progressesDB.map(p => p.activityType));
+  const claimSet = new Set(claimsDB.map(c => c.activityType));
+
+  // Lắp ghép dữ liệu trả về cho Client
+  const quests = activityTypes.map(activityType => ({
+    activityType,
+    label: labelForActivity(activityType),
+    spointReward: rewardMap.get(activityType) ?? DEFAULT_REWARDS[activityType],
+    completed: progressSet.has(activityType), // True nếu có trong Set Progress
+    claimed: claimSet.has(activityType),     // True nếu có trong Set Claim
+  }));
 
   return NextResponse.json({ quests });
 }

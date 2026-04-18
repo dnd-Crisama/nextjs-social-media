@@ -81,6 +81,15 @@ export async function POST(req: NextRequest, ctx: any) {
         },
         update: {},
       }),
+
+      // Ghi nhận Like Activity
+      prisma.userActivity.create({
+        data: {
+          userId: loggedInUser.id,
+          activityType: "LIKE_POST",
+        }
+      }),
+      
       ...(loggedInUser.id !== post.userId
         ? [
             prisma.notification.create({
@@ -95,6 +104,7 @@ export async function POST(req: NextRequest, ctx: any) {
         : []),
     ]);
 
+    
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error(error);

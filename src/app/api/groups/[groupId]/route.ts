@@ -24,6 +24,10 @@ export async function GET(
       return Response.json({ error: "Group not found" }, { status: 404 });
     }
 
+    if (group.isBanned && user.role !== "ADMIN") {
+      return Response.json({ error: "Group is banned" }, { status: 403 });
+    }
+
     // Check if private group and user is not a member
     if (!group.isPublic) {
       const isMember = await prisma.groupMember.findUnique({

@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
       orderBy = { createdAt: "desc" };
     }
 
-    let where: any = { isPublic: true };
+    let where: any = { isPublic: true, isBanned: false };
 
     if (query) {
       where = {

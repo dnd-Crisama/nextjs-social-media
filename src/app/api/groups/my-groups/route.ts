@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
 
     const groups = await prisma.group.findMany({
       where: {
+        isBanned: false,
         members: {
           some: {
             userId: user.id,

@@ -155,6 +155,8 @@ export function getGroupDataSelect() {
     coverImageUrl: true,
     userId: true,
     isPublic: true,
+    isBanned: true,
+    bannedUntil: true,
     createdAt: true,
     _count: {
       select: { members: true, posts: true },

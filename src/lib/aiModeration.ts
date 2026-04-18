@@ -61,7 +61,7 @@ export async function moderateComment(
     // Increment violation counter
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { violationCount: { increment: 1 } },
+      data: { violationCount: { increment: 1 }, totalViolations: { increment: 1 } },
     });
 
     // Log to moderation table

@@ -31,7 +31,7 @@ interface AdminUser {
   bannedUntil: string | null;
   banReason: string | null;
   violationCount: number;
-  violationTotal: number;
+  totalViolations: number;
   createdAt: string;
   _count: { posts: number; followers: number };
 }
@@ -144,8 +144,10 @@ export default function UsersManagementTab() {
   }, [search, statusFilter, sortOption]);
 
   useEffect(() => {
-    fetchUsers(search, page, statusFilter, sortOption);
-  }, [page, sortOption]);
+    if (search === '') {
+       fetchUsers('', page, statusFilter, sortOption);
+    }
+  }, [page]);
 
   const handleBan = () => {
     if (!selected) return;
@@ -379,8 +381,8 @@ export default function UsersManagementTab() {
                     <td className="px-4 py-3 text-center">{u._count.posts}</td>
                     <td className="px-4 py-3 text-center">{u._count.followers}</td>
                     <td className="px-4 py-3 text-center">
-                      {u.violationTotal > 0
-                        ? <span className="font-medium text-orange-500">{u.violationTotal}</span>
+                      {u.totalViolations > 0
+                        ? <span className="font-medium text-orange-500">{u.totalViolations}</span>
                         : <span className="text-muted-foreground">0</span>
                       }
                     </td>
@@ -461,8 +463,8 @@ export default function UsersManagementTab() {
           <DialogHeader>
             <DialogTitle>Chi tiết vi phạm @{selected?.username}</DialogTitle>
             <DialogDescription>
-              {selected?.violationTotal != null
-                ? `Tổng số lần vi phạm từ đầu: ${selected.violationTotal}`
+              {selected?.totalViolations != null
+                ? `Tổng số lần vi phạm từ đầu: ${selected.totalViolations}`
                 : 'Xem nhật ký vi phạm và xóa bình luận nếu cần.'}
             </DialogDescription>
           </DialogHeader>
@@ -471,8 +473,8 @@ export default function UsersManagementTab() {
             <p className="text-muted-foreground py-8 text-center">Đang tải chi tiết...</p>
           ) : violationLogs.length === 0 ? (
             <p className="text-muted-foreground py-8 text-center">
-              {selected?.violationTotal
-                ? `Tổng vi phạm hiện tại: ${selected.violationTotal}. Không có log vi phạm chi tiết trong dữ liệu.`
+              {selected?.totalViolations
+                ? `Tổng vi phạm hiện tại: ${selected.totalViolations}. Không có log vi phạm chi tiết trong dữ liệu.`
                 : 'Chưa có vi phạm nào được ghi nhận.'}
             </p>
           ) : (

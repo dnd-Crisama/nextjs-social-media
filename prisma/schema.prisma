@@ -49,6 +49,7 @@ model User {
   questProgresses       QuestProgress[]
   questClaims           QuestClaim[]
   violationCount   Int       @default(0)
+  totalViolations Int       @default(0)
   isBanned         Boolean   @default(false)
   bannedUntil      DateTime?
   moderationLogs   CommentModerationLog[] @relation("UserModerationLogs")
@@ -211,6 +212,9 @@ model Group {
   userId        String
   creator       User          @relation("Creator", fields: [userId], references: [id], onDelete: Cascade)
   isPublic      Boolean       @default(true)
+  isBanned      Boolean       @default(false)
+  banReason     String?
+  bannedUntil   DateTime?
   members       GroupMember[]
   posts         Post[]
 
@@ -419,6 +423,8 @@ model AuditLog {
 enum AuditAction {
   BAN_USER
   UNBAN_USER
+  BAN_GROUP
+  UNBAN_GROUP
   DELETE_POST
   HIDE_POST
   RESTORE_POST

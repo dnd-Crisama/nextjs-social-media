@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { validateRequest } from '@/auth';
+import { Prisma } from '@/generated/prisma';
 
 export async function GET(req: NextRequest) {
   const { user } = await validateRequest();
@@ -38,7 +39,14 @@ export async function GET(req: NextRequest) {
     ...statusWhere,
   };
 
-  const orderBy = [{ createdAt: 'desc' }];
+  let orderBy: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[] = 
+  { createdAt: 'desc' };
+
+  if (sort === 'VIOLATION_DESC') {
+  orderBy = [{ totalViolations: 'desc' }, { createdAt: 'desc' }]; 
+  } else if (sort === 'VIOLATION_ASC') {
+  orderBy = [{ totalViolations: 'asc' }, { createdAt: 'desc' }];
+  }
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
@@ -57,6 +65,7 @@ export async function GET(req: NextRequest) {
         bannedUntil: true,
         banReason: true,
         violationCount: true,
+        totalViolations: true,
         createdAt: true,
         _count: {
           select: { posts: true, followers: true },
@@ -66,39 +75,8 @@ export async function GET(req: NextRequest) {
     prisma.user.count({ where }),
   ]);
 
-  const userIds = users.map((u) => u.id);
-  const violationTotals = userIds.length
-    ? await prisma.commentModerationLog.groupBy({
-        by: ['userId'],
-        where: {
-          userId: { in: userIds },
-          aiFlag: { in: ['DELETE', 'FLAG'] },
-        },
-        _count: { _all: true },
-      })
-    : [];
-
-  const violationTotalMap = Object.fromEntries(
-    violationTotals.map((item) => [item.userId, item._count._all])
-  );
-
-  const usersWithTotal = users.map((user) => ({
-    ...user,
-    violationTotal: violationTotalMap[user.id] ?? 0,
-  }));
-
-  if (sort === 'VIOLATION_DESC') {
-    usersWithTotal.sort((a, b) =>
-      b.violationTotal - a.violationTotal || b.createdAt.getTime() - a.createdAt.getTime()
-    );
-  } else if (sort === 'VIOLATION_ASC') {
-    usersWithTotal.sort((a, b) =>
-      a.violationTotal - b.violationTotal || b.createdAt.getTime() - a.createdAt.getTime()
-    );
-  }
-
   return NextResponse.json({
-    users: usersWithTotal,
+    users,
     total,
     page,
     totalPages: Math.ceil(total / limit),

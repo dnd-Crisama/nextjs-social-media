@@ -52,6 +52,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Log audit action
+    await prisma.auditLog.create({
+      data: {
+        adminId: user.id,
+        action: "CREATE_FRAME",
+        targetType: "Frame",
+        targetId: frame.id,
+        detail: `Created frame: ${name}`,
+      },
+    });
+
     return Response.json(frame, { status: 201 });
   } catch (error) {
     console.error(error);
@@ -86,6 +97,17 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
+    // Log audit action
+    await prisma.auditLog.create({
+      data: {
+        adminId: user.id,
+        action: "UPDATE_FRAME",
+        targetType: "Frame",
+        targetId: id,
+        detail: `Updated frame: ${frame.name}`,
+      },
+    });
+
     return Response.json(frame);
   } catch (error) {
     console.error(error);
@@ -108,9 +130,30 @@ export async function DELETE(req: NextRequest) {
       return Response.json({ error: "Frame ID required" }, { status: 400 });
     }
 
-    await prisma.frame.delete({
+    // Get frame name before deletion for logging
+    const frame = await prisma.frame.findUnique({
       where: { id },
+      select: { name: true },
     });
+
+    if (!frame) {
+      return Response.json({ error: "Frame not found" }, { status: 404 });
+    }
+
+    await prisma.$transaction([
+      prisma.frame.delete({
+        where: { id },
+      }),
+      prisma.auditLog.create({
+        data: {
+          adminId: user.id,
+          action: "DELETE_FRAME",
+          targetType: "Frame",
+          targetId: id,
+          detail: `Deleted frame: ${frame.name}`,
+        },
+      }),
+    ]);
 
     return Response.json({ success: true });
   } catch (error) {

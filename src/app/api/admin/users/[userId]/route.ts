@@ -21,7 +21,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Không thể xóa admin' }, { status: 403 });
     }
 
-    await prisma.user.delete({ where: { id: userId } });
+    await prisma.$transaction([
+      prisma.user.delete({ where: { id: userId } }),
+      prisma.auditLog.create({
+        data: {
+          adminId: user.id,
+          action: "DELETE_USER",
+          targetType: "User",
+          targetId: userId,
+          detail: `Deleted user: @${target.username}`,
+        },
+      }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

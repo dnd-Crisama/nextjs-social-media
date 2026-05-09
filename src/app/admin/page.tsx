@@ -10,6 +10,7 @@ import DashboardTab from './tabs/DashboardTab';
 import UsersManagementTab from './tabs/UsersManagementTab';
 import GroupManagementTab from './tabs/GroupManagementTab';
 import UserActivityTab from './tabs/UserActivityTab';
+import AuditLogsTab from './tabs/AuditLogsTab';
 
 export default function AdminPage() {
   const { user } = useSession();
@@ -36,6 +37,7 @@ export default function AdminPage() {
         <TabsTrigger className="w-full justify-start" value="frames">Frame Management</TabsTrigger>
         <TabsTrigger className="w-full justify-start" value="moderation">Comment Moderation</TabsTrigger>
         <TabsTrigger className="w-full justify-start" value="users-activity">Nhật ký hoạt động</TabsTrigger>
+        <TabsTrigger className="w-full justify-start" value="audit-logs">Nhật ký quản trị</TabsTrigger>
       </TabsList>
 
       <div className="space-y-6 w-full">
@@ -45,6 +47,7 @@ export default function AdminPage() {
         <TabsContent value="frames"><FramesManagementTab /></TabsContent>
         <TabsContent value="moderation"><CommentModerationTab /></TabsContent>
         <TabsContent value="users-activity"><UserActivityTab /></TabsContent>
+        <TabsContent value="audit-logs"><AuditLogsTab /></TabsContent>
       </div>
     </div>
   </Tabs>

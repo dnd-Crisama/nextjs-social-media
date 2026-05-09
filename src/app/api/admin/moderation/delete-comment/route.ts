@@ -13,9 +13,32 @@ export async function POST(req: Request) {
   }
 
   try {
-    await prisma.comment.delete({ where: { id: commentId } });
+    // Get comment details before deletion for logging
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { content: true, userId: true, postId: true },
+    });
+
+    if (!comment) {
+      return NextResponse.json({ error: 'Comment not found or already deleted' }, { status: 404 });
+    }
+
+    await prisma.$transaction([
+      prisma.comment.delete({ where: { id: commentId } }),
+      prisma.auditLog.create({
+        data: {
+          adminId: user.id,
+          action: 'DELETE_COMMENT',
+          targetType: 'Comment',
+          targetId: commentId,
+          detail: `Deleted comment by user ${comment.userId} on post ${comment.postId}: "${comment.content.substring(0, 100)}"`,
+        },
+      }),
+    ]);
+
     return NextResponse.json({ success: true, commentId });
   } catch (error) {
     return NextResponse.json({ error: 'Comment not found or already deleted' }, { status: 404 });
   }
 }
+

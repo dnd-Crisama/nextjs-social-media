@@ -132,13 +132,14 @@ interface MediaPreviewProps {
 function MediaPreview({ media }: MediaPreviewProps) {
   if (media.type === "IMAGE") {
     return (
-      <Image
-        src={media.url}
-        alt="Attachment"
-        width={500}
-        height={500}
-        className="mx-auto size-fit max-h-[30rem] rounded-2xl"
-      />
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-secondary">
+        <Image
+          src={media.url}
+          alt="Attachment"
+          fill // Sử dụng fill để lấp đầy khung 
+          className="object-cover" // Giúp ảnh không bị méo, tự cắt phần thừa
+        />
+      </div>
     );
   }
 

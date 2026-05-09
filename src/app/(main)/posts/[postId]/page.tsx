@@ -39,7 +39,7 @@ export async function generateMetadata({
   const post = await getPost(postId, user.id);
 
   return {
-    title: `${post.user.displayName}: ${post.content.slice(0, 50)}...`,
+    title: `${post.user.displayName}: ${post.content?.slice(0, 50)}...`,
   };
 }
 

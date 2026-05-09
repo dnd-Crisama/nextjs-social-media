@@ -30,7 +30,7 @@ export const loginSchema = z.object({
 export type LoginValues = z.infer<typeof loginSchema>;
 
 export const createPostSchema = z.object({
-  content: requiredString,
+  content: z.string().max(1000, "Nội dung quá dài"),
   mediaIds: z.array(z.string()).max(5, "5 cái thôi up gì lắm thế?"),
   groupId: z.string().optional(),
 });

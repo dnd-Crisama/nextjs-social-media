@@ -44,6 +44,7 @@ async function WhoToFollow() {
           followerId: user.id,
         },
       },
+      isBanned: false,
     },
     select: getUserDataSelect(user.id),
     take: 5,
@@ -75,7 +76,7 @@ async function WhoToFollow() {
             initialState={{
               followers: user._count.followers,
               isFollowedByUser: user.followers.some(
-                ({ followerId }) => followerId === user.id,
+                ({ followerId }) => followerId === user.id, 
               ),
             }}
           />

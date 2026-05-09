@@ -3,6 +3,11 @@
       {
         "path": "/api/clear-uploads",
         "schedule": "0 2 * * *"
-      }
+      },
+
+      {
+      "path": "/api/unban-users",
+      "schedule": "* * * * *" 
+    }
     ]
   }

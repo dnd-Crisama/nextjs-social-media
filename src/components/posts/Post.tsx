@@ -64,12 +64,10 @@ export default function Post({ post }: PostProps) {
             </div>
           </div>
         </div>
-        {post.user.id === user.id && (
-          <PostMoreButton
-            post={post}
-            className="opacity-0 transition-opacity group-hover/post:opacity-100"
-          />
-        )}
+        <PostMoreButton
+          post={post}
+          className="opacity-0 transition-opacity group-hover/post:opacity-100"
+        />
       </div>
       <Linkify>
         <div className="whitespace-pre-line break-words">{post.content}</div>

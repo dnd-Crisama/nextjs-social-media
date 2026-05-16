@@ -96,7 +96,7 @@ model Post {
   bookmarks           Bookmark[]
   comments            Comment[]
   linkedNotifications Notification[]
-  reports Report[]
+  reports             Report[]
 
   createdAt DateTime @default(now())
 
@@ -140,6 +140,9 @@ model Comment {
   replies   Comment[] @relation("CommentReplies")
   aiScore   Float?
   aiFlag    String?  
+
+  reports   Report[]
+  isHidden  Boolean   @default(false)
 
   createdAt DateTime  @default(now())
 
@@ -373,7 +376,9 @@ model Report {
   reportedUserId   String?
   reportedUser     User?        @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
   reportedPostId   String?
-  reportedPost     Post?        @relation(fields: [reportedPostId], references: [id], onDelete: Cascade)
+  reportedPost     Post?        @relation(fields: [reportedPostId], references: [id], onDelete: SetNull)
+  reportedCommentId String?
+  reportedComment   Comment?    @relation(fields: [reportedCommentId], references: [id], onDelete: SetNull)
   type             ReportType
   reason           String
   status           ReportStatus @default(PENDING)
@@ -385,6 +390,7 @@ model Report {
   @@index([reporterId])
   @@index([reportedUserId])
   @@index([reportedPostId])
+  @@index([reportedCommentId])
   @@index([status])
   @@map("reports")
 }

@@ -16,7 +16,7 @@ export async function GET(
 
     // Chỉ fetch root comments (parentId = null) — replies được fetch nested bên trong
     const comments = await prisma.comment.findMany({
-      where: { postId, parentId: null },
+      where: { postId, parentId: null, isHidden: false },
       include: getCommentDataInclude(user.id),
       orderBy: { createdAt: "asc" },
       take: -pageSize - 1,

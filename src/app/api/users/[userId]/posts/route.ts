@@ -45,6 +45,7 @@ export async function GET(
     const posts = await prisma.post.findMany({
       where: {
         userId,
+        status: "PUBLISHED",
         OR: [
           { groupId: null },
           { group: { isPublic: true } },

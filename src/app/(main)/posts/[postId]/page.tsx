@@ -24,7 +24,7 @@ const getPost = cache(async (postId: string, loggedInUserId: string) => {
     include: getPostDataInclude(loggedInUserId),
   });
 
-  if (!post) notFound();
+  if (!post || post.status !== "PUBLISHED") notFound();
 
   return post;
 });

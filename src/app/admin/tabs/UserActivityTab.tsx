@@ -37,34 +37,46 @@ const ACTIVITY_META: Record<
   ActivityType,
   { label: string; icon: React.ReactNode; badgeClass: string; statClass: string }
 > = {
-  DAILY_CHECKIN: { label: "Check-in",   icon: <MapPin        className="h-3.5 w-3.5" />, badgeClass: "bg-orange-100 text-orange-700 border-orange-200", statClass: "text-orange-600" },
-  CREATE_POST:   { label: "Đăng bài",   icon: <FileText      className="h-3.5 w-3.5" />, badgeClass: "bg-blue-100 text-blue-700 border-blue-200",     statClass: "text-blue-600"   },
-  LIKE_POST:     { label: "Thích bài",  icon: <Heart         className="h-3.5 w-3.5" />, badgeClass: "bg-pink-100 text-pink-700 border-pink-200",     statClass: "text-pink-600"   },
-  COMMENT_POST:  { label: "Bình luận",  icon: <MessageCircle className="h-3.5 w-3.5" />, badgeClass: "bg-purple-100 text-purple-700 border-purple-200", statClass: "text-purple-600" },
+  DAILY_CHECKIN: { label: "Check-in", icon: <MapPin className="h-3.5 w-3.5" />, badgeClass: "bg-orange-100 text-orange-700 border-orange-200", statClass: "text-orange-600" },
+  CREATE_POST: { label: "Đăng bài", icon: <FileText className="h-3.5 w-3.5" />, badgeClass: "bg-blue-100 text-blue-700 border-blue-200", statClass: "text-blue-600" },
+  LIKE_POST: { label: "Thích bài", icon: <Heart className="h-3.5 w-3.5" />, badgeClass: "bg-pink-100 text-pink-700 border-pink-200", statClass: "text-pink-600" },
+  COMMENT_POST: { label: "Bình luận", icon: <MessageCircle className="h-3.5 w-3.5" />, badgeClass: "bg-purple-100 text-purple-700 border-purple-200", statClass: "text-purple-600" },
 };
 
 const STAT_ICONS: Record<ActivityType, React.ReactNode> = {
-  DAILY_CHECKIN: <MapPin        className="h-5 w-5 text-orange-500" />,
-  CREATE_POST:   <FileText      className="h-5 w-5 text-blue-500"   />,
-  LIKE_POST:     <Heart         className="h-5 w-5 text-pink-500"   />,
-  COMMENT_POST:  <MessageCircle className="h-5 w-5 text-purple-500" />,
+  DAILY_CHECKIN: <MapPin className="h-5 w-5 text-orange-500" />,
+  CREATE_POST: <FileText className="h-5 w-5 text-blue-500" />,
+  LIKE_POST: <Heart className="h-5 w-5 text-pink-500" />,
+  COMMENT_POST: <MessageCircle className="h-5 w-5 text-purple-500" />,
 };
 
 const PAGE_LIMIT = 15;
-const API        = "/api/admin/user-activities"; 
+const API = "/api/admin/user-activities";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function UserActivityTab() {
-  const [searchInput,   setSearchInput  ] = useState("");
-  const [appliedQuery,  setAppliedQuery ] = useState<string | undefined>();
-  const [selectedType,  setSelectedType ] = useState<ActivityType | "ALL">("ALL");
-  const [page,          setPage         ] = useState(1);
+  const [searchInput, setSearchInput] = useState(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash.startsWith("#activity-")) return hash.replace("#activity-", "");
+    }
+    return "";
+  });
+  const [appliedQuery, setAppliedQuery] = useState<string | undefined>(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash.startsWith("#activity-")) return hash.replace("#activity-", "");
+    }
+    return undefined;
+  });
+  const [selectedType, setSelectedType] = useState<ActivityType | "ALL">("ALL");
+  const [page, setPage] = useState(1);
 
-  const [activities,   setActivities  ] = useState<UserActivityItem[]>([]);
-  const [total,        setTotal       ] = useState(0);
-  const [stats,        setStats       ] = useState<Stats[]>([]);
-  const [loading,      setLoading     ] = useState(true);
+  const [activities, setActivities] = useState<UserActivityItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<Stats[]>([]);
+  const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
 
   const totalPages = Math.ceil(total / PAGE_LIMIT);
@@ -79,25 +91,56 @@ export default function UserActivityTab() {
   }, []);
 
   // ── Fetch activities ──────────────────────────────────────────────────────
-  const fetchActivities = useCallback(async () => {
+  useEffect(() => {
+    let ignore = false;
     setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      // Gửi 'query' thay vì 'userId'
-      if (appliedQuery)           params.set("query", appliedQuery);
-      if (selectedType !== "ALL") params.set("activityType", selectedType);
-      params.set("page",  String(page));
-      params.set("limit", String(PAGE_LIMIT));
 
-      const res  = await fetch(`${API}?${params.toString()}`);
-      const data = await res.json();
-      setActivities(data.activities);
-      setTotal(data.total);
-    } finally { setLoading(false); }
+    async function doFetch() {
+      try {
+        const params = new URLSearchParams();
+        if (appliedQuery) params.set("query", appliedQuery);
+        if (selectedType !== "ALL") params.set("activityType", selectedType);
+        params.set("page", String(page));
+        params.set("limit", String(PAGE_LIMIT));
+
+        const res = await fetch(`${API}?${params.toString()}`);
+        const data = await res.json();
+
+        if (!ignore) {
+          setActivities(data.activities);
+          setTotal(data.total);
+          setLoading(false);
+        }
+      } catch (error) {
+        if (!ignore) {
+          console.error(error);
+          setLoading(false);
+        }
+      }
+    }
+
+    doFetch();
+    return () => { ignore = true; };
   }, [appliedQuery, selectedType, page]);
 
-  useEffect(() => { fetchStats();      }, [fetchStats]);
-  useEffect(() => { fetchActivities(); }, [fetchActivities]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith("#activity-")) {
+        const username = hash.replace("#activity-", "");
+        setSearchInput(username);
+        setAppliedQuery(username);
+        setPage(1);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHash);
+    handleHash();
+
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const applyFilter = () => {
@@ -109,8 +152,8 @@ export default function UserActivityTab() {
   };
   // Khi click nút "Xem của user này", điền username vào thay vì ID!
   const filterByUser = (username: string) => {
-    setSearchInput(username); 
-    setAppliedQuery(username); 
+    setSearchInput(username);
+    setAppliedQuery(username);
     setPage(1);
   };
 
@@ -135,33 +178,33 @@ export default function UserActivityTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {statsLoading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-4">
-                  <div className="h-4 bg-muted rounded w-2/3 mb-2" />
-                  <div className="h-7 bg-muted rounded w-1/3" />
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-4 bg-muted rounded w-2/3 mb-2" />
+                <div className="h-7 bg-muted rounded w-1/3" />
+              </CardContent>
+            </Card>
+          ))
+          : stats.map(({ type, count }) => {
+            const meta = ACTIVITY_META[type];
+            return (
+              <Card
+                key={type}
+                className="cursor-pointer hover:bg-muted/30 transition-colors"
+                onClick={() => { setSelectedType(type); setPage(1); }}
+              >
+                <CardContent className="p-4 flex items-center gap-3">
+                  {STAT_ICONS[type]}
+                  <div>
+                    <p className="text-xs text-muted-foreground leading-none">{meta.label} hôm nay</p>
+                    <p className={`text-2xl font-bold mt-1 ${meta.statClass}`}>
+                      {count.toLocaleString()}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
-            ))
-          : stats.map(({ type, count }) => {
-              const meta = ACTIVITY_META[type];
-              return (
-                <Card
-                  key={type}
-                  className="cursor-pointer hover:bg-muted/30 transition-colors"
-                  onClick={() => { setSelectedType(type); setPage(1); }}
-                >
-                  <CardContent className="p-4 flex items-center gap-3">
-                    {STAT_ICONS[type]}
-                    <div>
-                      <p className="text-xs text-muted-foreground leading-none">{meta.label} hôm nay</p>
-                      <p className={`text-2xl font-bold mt-1 ${meta.statClass}`}>
-                        {count.toLocaleString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            );
+          })}
       </div>
 
       {/* Bộ lọc — UC-A17 Dòng sự kiện 1 */}
@@ -237,30 +280,30 @@ export default function UserActivityTab() {
             <TableBody>
               {loading
                 ? Array.from({ length: 8 }).map((_, i) => (
-                    <TableRow key={i} className="animate-pulse">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-muted" />
-                          <div className="space-y-1.5">
-                            <div className="h-3.5 bg-muted rounded w-28" />
-                            <div className="h-3 bg-muted rounded w-20" />
-                          </div>
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted" />
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 bg-muted rounded w-28" />
+                          <div className="h-3 bg-muted rounded w-20" />
                         </div>
-                      </TableCell>
-                      <TableCell><div className="h-6 bg-muted rounded w-24" /></TableCell>
-                      <TableCell><div className="h-3.5 bg-muted rounded w-28" /></TableCell>
-                      <TableCell />
-                    </TableRow>
-                  ))
-                : activities.length === 0
-                ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-16 text-center text-muted-foreground">
-                      Không có hoạt động nào
+                      </div>
                     </TableCell>
+                    <TableCell><div className="h-6 bg-muted rounded w-24" /></TableCell>
+                    <TableCell><div className="h-3.5 bg-muted rounded w-28" /></TableCell>
+                    <TableCell />
                   </TableRow>
-                )
-                : activities.map((act) => {
+                ))
+                : activities.length === 0
+                  ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-16 text-center text-muted-foreground">
+                        Không có hoạt động nào
+                      </TableCell>
+                    </TableRow>
+                  )
+                  : activities.map((act) => {
                     const meta = ACTIVITY_META[act.activityType];
                     return (
                       <TableRow key={act.id} className="hover:bg-muted/20">

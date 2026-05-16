@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
 
     // Fetch posts with group info to filter based on membership
     const posts = await prisma.post.findMany({
+      where: { status: "PUBLISHED" },
       include: {
         ...getPostDataInclude(user.id),
         group: {

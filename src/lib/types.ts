@@ -73,9 +73,11 @@ export function getCommentDataInclude(loggedInUserId: string) {
   return {
     user: { select: getUserDataSelect(loggedInUserId) },
     replies: {
+      where: { isHidden: false },
       include: {
         user: { select: getUserDataSelect(loggedInUserId) },
         replies: {
+          where: { isHidden: false },
           include: {
             user: { select: getUserDataSelect(loggedInUserId) },
           },

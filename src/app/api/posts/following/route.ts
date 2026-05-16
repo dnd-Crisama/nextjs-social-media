@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
 
     const posts = await prisma.post.findMany({
       where: {
+        status: "PUBLISHED",
         OR: [
           // 1. Posts từ người mình follow — không thuộc group nào
           {

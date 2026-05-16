@@ -89,9 +89,7 @@ export default function Comment({ comment, post, depth = 0 }: CommentProps) {
                   Reply
                 </button>
               )}
-              {comment.user.id === user.id && (
-                <CommentMoreButton comment={comment} className="" />
-              )}
+              <CommentMoreButton comment={comment} className="" />
             </div>
           </div>
 

@@ -38,9 +38,12 @@ async function handlePostSearch(q: string, userId: string, cursor?: string) {
     FROM posts p
     LEFT JOIN users u ON p."userId" = u.id
     WHERE
-      unaccent(lower(p.content))      LIKE unaccent(lower(${pattern}))
-      OR unaccent(lower(u."displayName")) LIKE unaccent(lower(${pattern}))
-      OR unaccent(lower(u.username))      LIKE unaccent(lower(${pattern}))
+      p.status = 'PUBLISHED' AND
+      (
+        unaccent(lower(p.content))      LIKE unaccent(lower(${pattern}))
+        OR unaccent(lower(u."displayName")) LIKE unaccent(lower(${pattern}))
+        OR unaccent(lower(u.username))      LIKE unaccent(lower(${pattern}))
+      )
     ORDER BY p."createdAt" DESC
     LIMIT ${pageSize + 1}
   `;
@@ -57,7 +60,7 @@ async function handlePostSearch(q: string, userId: string, cursor?: string) {
     }
 
   const posts = await prisma.post.findMany({
-    where: { id: { in: pageIds } },
+    where: { id: { in: pageIds }, status: "PUBLISHED" },
     include: getPostDataInclude(userId),
     orderBy: { createdAt: "desc" },
   });

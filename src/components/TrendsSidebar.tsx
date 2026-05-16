@@ -8,7 +8,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import FollowButton from "./FollowButton";
 import UserAvatar from "./UserAvatar";
-import UserTooltip from "./UserTooltip";
 import DailyQuests from "./DailyQuests";
 
 export default function TrendsSidebar() {
@@ -47,39 +46,40 @@ async function WhoToFollow() {
       isBanned: false,
     },
     select: getUserDataSelect(user.id),
+    orderBy: { createdAt: "desc" },
     take: 5,
   });
 
   return (
     <div className="space-y-5 rounded-2xl bg-card p-5 shadow-sm">
       <div className="text-xl font-bold">Who to follow</div>
-      {usersToFollow.map((user) => (
-        <div key={user.id} className="flex items-center justify-between gap-3">
-          <UserTooltip user={user}>
-            <Link
-              href={`/users/${user.username}`}
-              className="flex items-center gap-3"
-            >
-              <UserAvatar avatarUrl={user.avatarUrl} className="flex-none" frame={user.avatarFrame} />
-              <div>
-                <p className="line-clamp-1 break-all font-semibold hover:underline">
-                  {user.displayName}
-                </p>
-                <p className="line-clamp-1 break-all text-muted-foreground">
-                  @{user.username}
-                </p>
-              </div>
-            </Link>
-          </UserTooltip>
-          <FollowButton
-            userId={user.id}
-            initialState={{
-              followers: user._count.followers,
-              isFollowedByUser: user.followers.some(
-                ({ followerId }) => followerId === user.id, 
-              ),
-            }}
-          />
+      {usersToFollow.map((userToFollow) => (
+        <div key={userToFollow.id} className="flex items-center gap-3">
+          <Link
+            href={`/users/${userToFollow.username}`}
+            className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden"
+          >
+            <UserAvatar avatarUrl={userToFollow.avatarUrl} className="flex-none" />
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-1 break-all font-semibold hover:underline">
+                {userToFollow.displayName}
+              </p>
+              <p className="line-clamp-1 break-all text-muted-foreground">
+                @{userToFollow.username}
+              </p>
+            </div>
+          </Link>
+          <div className="flex-none">
+            <FollowButton
+              userId={userToFollow.id}
+              initialState={{
+                followers: userToFollow._count.followers,
+                isFollowedByUser: userToFollow.followers.some(
+                  ({ followerId }) => followerId === user.id, 
+                ),
+              }}
+            />
+          </div>
         </div>
       ))}
     </div>

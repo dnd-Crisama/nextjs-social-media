@@ -44,7 +44,7 @@ export default function GroupsPage() {
   const groups = data?.pages.flatMap((page) => page.groups) || [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-1 w-full">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

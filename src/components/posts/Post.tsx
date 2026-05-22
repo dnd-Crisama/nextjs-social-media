@@ -50,6 +50,9 @@ export default function Post({ post }: PostProps) {
                 suppressHydrationWarning>
                 {formatRelativeDate(post.createdAt)}
               </Link>
+              {post.updatedAt && new Date(post.updatedAt).getTime() - new Date(post.createdAt).getTime() > 1000 && (
+                <span className="text-xs text-muted-foreground">(edited)</span>
+              )}
               {post.group && (
                 <>
                   <span className="text-muted-foreground">·</span>

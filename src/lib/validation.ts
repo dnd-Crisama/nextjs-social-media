@@ -35,6 +35,13 @@ export const createPostSchema = z.object({
   groupId: z.string().optional(),
 });
 
+export const updatePostSchema = z.object({
+  postId: z.string(),
+  content: z.string().max(1000, "Nội dung quá dài"),
+  mediaIds: z.array(z.string()).max(5, "5 cái thôi up gì lắm thế?"),
+  deletedMediaIds: z.array(z.string()).optional(),
+});
+
 export const updateUserProfileSchema = z.object({
   displayName: requiredString,
   bio: z.string().max(1000, "Must be at most 1000 characters"),

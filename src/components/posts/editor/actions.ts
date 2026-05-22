@@ -3,7 +3,7 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getPostDataInclude } from "@/lib/types";
-import { createPostSchema } from "@/lib/validation";
+import { createPostSchema, updatePostSchema } from "@/lib/validation";
 
 export async function submitPost(input: {
   content: string;
@@ -58,4 +58,52 @@ export async function submitPost(input: {
   });
 
   return newPost;
+}
+
+export async function updatePost(input: {
+  postId: string;
+  content: string;
+  mediaIds: string[];
+  deletedMediaIds?: string[];
+}) {
+  const { user } = await validateRequest();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const { postId, content, mediaIds, deletedMediaIds } = updatePostSchema.parse(input);
+
+  const existingPost = await prisma.post.findUnique({
+    where: { id: postId },
+  });
+
+  if (!existingPost) throw new Error("Post not found");
+
+  if (existingPost.userId !== user.id) throw new Error("Unauthorized");
+
+  const updatedPost = await prisma.$transaction(async (tx) => {
+    // Delete removed attachments from the database
+    if (deletedMediaIds && deletedMediaIds.length > 0) {
+      await tx.media.deleteMany({
+        where: {
+          id: { in: deletedMediaIds },
+        },
+      });
+    }
+
+    // Update the post with new content and set the correct attachments
+    const post = await tx.post.update({
+      where: { id: postId },
+      data: {
+        content,
+        attachments: {
+          set: mediaIds.map((id) => ({ id })),
+        },
+      },
+      include: getPostDataInclude(user.id),
+    });
+
+    return post;
+  });
+
+  return updatedPost;
 }

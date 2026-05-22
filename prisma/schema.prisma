@@ -99,6 +99,7 @@ model Post {
   reports             Report[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
 
   @@index([groupId])
   @@index([userId, createdAt])

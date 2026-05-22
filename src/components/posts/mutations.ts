@@ -8,6 +8,41 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { deletePost } from "./actions";
+import ky from "@/lib/ky";
+
+interface UpdatePostInput {
+  postId: string;
+  input: {
+    content: string;
+    mediaIds: string[];
+  };
+}
+
+export function useEditPostMutation() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ postId, input }: UpdatePostInput) => {
+      return ky.put(`/api/posts/${postId}`, { json: input }).json();
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["post-feed"] });
+      toast({
+        description: "Post updated successfully",
+      });
+    },
+    onError(error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        description: "Failed to update post. Please try again.",
+      });
+    },
+  });
+
+  return mutation;
+}
 
 export function useDeletePostMutation() {
   const { toast } = useToast();

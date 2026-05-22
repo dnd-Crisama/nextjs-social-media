@@ -78,7 +78,38 @@ export async function moderateComment(
 
     if (action === 'DELETE') {
       // Hard delete the comment
-      await prisma.comment.delete({ where: { id: commentId } });
+      const comment = await prisma.comment.findUnique({
+  where: { id: commentId },
+  select: {
+    id: true,
+    postId: true,
+    userId: true,
+    parentId: true,
+    post: {
+      select: {
+        userId: true,
+      },
+    },
+  },
+});
+
+if (!comment) {
+  return { deleted: false, banned: false };
+}
+
+await prisma.notification.deleteMany({
+  where: {
+    type: {
+      in: ["COMMENT", "MENTION"],
+    },
+    issuerId: userId,
+    postId: comment.postId,
+  },
+});
+
+await prisma.comment.delete({
+  where: { id: commentId },
+});
 
       // Gửi thông báo cho user biết comment của họ đã bị xóa vì vi phạm
       await prisma.notification.create({

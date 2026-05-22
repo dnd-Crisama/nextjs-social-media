@@ -1,14 +1,16 @@
 import { PostData } from "@/lib/types";
-import { Flag, MoreHorizontal, Trash2 } from "lucide-react";
+import { Flag, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import DeletePostDialog from "./DeletePostDialog";
+import EditPostDialog from "./EditPostDialog";
 import ReportDialog from "../ReportDialog";
 import { useSession } from "@/app/(main)/SessionProvider";
 
@@ -22,6 +24,7 @@ export default function PostMoreButton({
   className,
 }: PostMoreButtonProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const { user } = useSession();
 
@@ -35,12 +38,23 @@ export default function PostMoreButton({
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {post.user.id === user.id && (
-            <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
-              <span className="flex items-center gap-3 text-destructive">
-                <Trash2 className="size-4" />
-                Delete
+            <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+              <span className="flex items-center gap-3">
+                <Pencil className="size-4" />
+                Edit
               </span>
             </DropdownMenuItem>
+          )}
+          {post.user.id === user.id && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
+                <span className="flex items-center gap-3 text-destructive">
+                  <Trash2 className="size-4" />
+                  Delete
+                </span>
+              </DropdownMenuItem>
+            </>
           )}
           {post.user.id !== user.id && (
             <DropdownMenuItem onClick={() => setShowReportDialog(true)}>
@@ -52,6 +66,11 @@ export default function PostMoreButton({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+      <EditPostDialog
+        post={post}
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+      />
       <DeletePostDialog
         post={post}
         open={showDeleteDialog}

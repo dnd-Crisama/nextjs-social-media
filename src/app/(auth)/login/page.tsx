@@ -74,12 +74,14 @@ export default function Page() {
               </span>
               <div className="h-px w-6 bg-gradient-to-l from-transparent to-violet-400/60" />
             </div>
-            <h1
-              className="bg-gradient-to-r from-violet-700 via-fuchsia-600 to-pink-500 bg-clip-text text-4xl font-black tracking-tight text-transparent"
-              style={{ fontFamily: "'Rajdhani', 'Orbitron', sans-serif" }}
-            >
-              StarRail
-            </h1>
+            <Image
+              src="/starrail-logo.png"
+              alt="StarRail"
+              width={180}
+              height={52}
+              priority
+              className="mx-auto h-14 w-auto object-contain"
+            />
             <p className="text-sm text-violet-400/70">
               Your universe. Your story. Your realm.
             </p>

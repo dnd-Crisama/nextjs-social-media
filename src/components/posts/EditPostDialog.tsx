@@ -170,7 +170,7 @@ export default function EditPostDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[calc(100vh-2rem)] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit post</DialogTitle>
         </DialogHeader>
@@ -276,12 +276,12 @@ function ExistingAttachmentPreview({
 }: ExistingAttachmentPreviewProps) {
   if (attachment.type === "IMAGE") {
     return (
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-secondary">
+      <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-secondary sm:h-72">
         <Image
           src={attachment.url}
           alt="Attachment preview"
           fill
-          className="object-cover"
+          className="object-contain"
         />
         <button
           onClick={onRemoveClick}
@@ -295,11 +295,11 @@ function ExistingAttachmentPreview({
 
   if (attachment.type === "VIDEO") {
     return (
-      <div className="relative">
+      <div className="relative overflow-hidden rounded-2xl bg-secondary">
         <video
           src={attachment.url}
           controls
-          className="mx-auto size-fit max-h-[30rem] rounded-2xl"
+          className="mx-auto max-h-72 w-full object-contain"
         />
         <button
           onClick={onRemoveClick}
@@ -327,7 +327,10 @@ function NewAttachmentPreview({
 
   return (
     <div
-      className={cn("relative mx-auto size-fit", isUploading && "opacity-50")}
+      className={cn(
+        "relative w-full overflow-hidden rounded-2xl bg-secondary",
+        isUploading && "opacity-50"
+      )}
     >
       {file.type.startsWith("image") ? (
         <Image
@@ -335,10 +338,10 @@ function NewAttachmentPreview({
           alt="New attachment preview"
           width={500}
           height={500}
-          className="size-fit max-h-[30rem] rounded-2xl object-cover"
+          className="mx-auto max-h-72 w-full object-contain"
         />
       ) : (
-        <video controls className="size-fit max-h-[30rem] rounded-2xl">
+        <video controls className="mx-auto max-h-72 w-full object-contain">
           <source src={src} type={file.type} />
         </video>
       )}

@@ -61,7 +61,7 @@ export default function AdminPage() {
   <h1 className="mb-6 text-3xl font-bold">Admin Panel</h1>
   <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical">
     <div className="grid gap-6 grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <TabsList className="flex flex-col gap-2 rounded-lg bg-card p-2 text-left h-fit w-full">
+      <TabsList className="flex h-fit w-full flex-col gap-2 rounded-lg bg-card p-2 text-left lg:sticky lg:top-[5.25rem] lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto">
         <TabsTrigger className="w-full justify-start" value="dashboard">Dashboard</TabsTrigger>
         <TabsTrigger className="w-full justify-start" value="reports">Quản lý báo cáo</TabsTrigger>
         <TabsTrigger className="w-full justify-start" value="users">Quản lý người dùng</TabsTrigger>

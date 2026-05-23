@@ -30,10 +30,10 @@ interface ReportDialogProps {
 
 const reportReasons: Record<ReportType, string> = {
   SPAM: "Spam",
-  HARASSMENT: "Harassment or bullying",
-  INAPPROPRIATE_CONTENT: "Inappropriate content",
-  FAKE_ACCOUNT: "Fake account",
-  OTHER: "Other",
+  HARASSMENT: "Quấy rối hoặc bắt nạt",
+  INAPPROPRIATE_CONTENT: "Nội dung không phù hợp",
+  FAKE_ACCOUNT: "Tài khoản giả mạo",
+  OTHER: "Khác",
 };
 
 export default function ReportDialog({
@@ -119,7 +119,7 @@ export default function ReportDialog({
             loading={isSubmitting}
             disabled={!reportType || isSubmitting}
           >
-            Submit
+            Gửi 
           </LoadingButton>
         </DialogFooter>
       </DialogContent>

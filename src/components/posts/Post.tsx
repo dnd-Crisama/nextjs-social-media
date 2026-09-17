@@ -138,7 +138,7 @@ function MediaPreview({ media }: MediaPreviewProps) {
           src={media.url}
           alt="Attachment"
           fill // Sử dụng fill để lấp đầy khung 
-          className="object-cover" // Giúp ảnh không bị méo, tự cắt phần thừa
+          className="object-fit:cover" // Giúp ảnh không bị méo, tự cắt phần thừa
         />
       </div>
     );

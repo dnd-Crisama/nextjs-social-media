@@ -20,8 +20,12 @@ export default function useMediaUpload() {
           prev.map((att) => {
             const uploaded = res.find((r: any) => r.name === att.file.name);
             return uploaded
-              ? { ...att, mediaId: uploaded.mediaId, isUploading: false }
-              : att;
+  ? {
+      ...att,
+      mediaId: uploaded.serverData.mediaId,
+      isUploading: false,
+    }
+  : att;
           })
         );
       }
